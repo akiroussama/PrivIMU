@@ -22,15 +22,18 @@ This file is the professor-facing map of the whole project. Every artifact shoul
 | 16 | Experiment protocol | `docs/EXPERIMENT_PROTOCOL.md` | Ready | Methodological defense |
 | 17 | Ethics and limits | `docs/ETHICS_AND_LIMITS.md` | Ready | Responsible security framing |
 | 18 | Related work table | `docs/SOTA_TABLE.md` | Draft | Scientific credibility |
-| 19 | Slides | `slides/slides.md` | Draft | 15-slide story |
-| 20 | Speaker notes | `slides/speaker_notes/*.md` | Draft | 5 × 3 min orchestration |
-| 21 | Report | `report/PrivIMU_report.md` | Draft | 6–8 page academic document |
-| 22 | Tests | `tests/` | Ready | Engineering quality |
-| 23 | CI workflow | `.github/workflows/tests.yml` | Ready | Public quality signal |
-| 24 | Release tag | `v1.0-submission` | Pending | Frozen final version |
+| 19 | Slides source | `slides/slides.md` | Draft | Marp-ready 15-slide story |
+| 20 | Final PowerPoint | `slides/PrivIMU_final.pptx` | Ready v1 | Polished deck for soutenance |
+| 21 | Final PDF slides | `slides/PrivIMU_final.pdf` | Ready v1 | Portable version for submission |
+| 22 | Speaker notes | `slides/speaker_notes/*.md` | Draft | 5 × 3 min orchestration |
+| 23 | Report | `report/PrivIMU_report.md` | Draft | 6–8 page academic document |
+| 24 | Tests | `tests/` | Ready | Engineering quality |
+| 25 | CI workflow | `.github/workflows/tests.yml` | Ready | Public quality signal |
+| 26 | Release tag | `v1.0-submission` | Pending | Frozen final version |
+| 27 | Deployment guide | `docs/DEPLOYMENT.md` | Ready | Colab and Streamlit deployment values |
+| 28 | Streamlit demo CSV | `examples/demo_motionsense_like.csv` | Ready | Simple upload test file |
 
 ## Submission principle
 
 The professor should be able to open this file and verify the effort in less than two minutes.
 
-| Deployment guide | `docs/DEPLOYMENT.md` | Colab and Streamlit deployment values |

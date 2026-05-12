@@ -17,10 +17,41 @@ from privimu.features import WindowConfig, extract_features, window_signal, zsco
 from privimu.metrics import entropy_bits, privacy_entropy_leakage
 from privimu.model_rf import load_model
 
+EXAMPLE_CSV_PATH = Path("examples/demo_motionsense_like.csv")
+OFFICIAL_MOTIONSENSE_REPO = "https://github.com/mmalekzadeh/motion-sense"
+OFFICIAL_DEVICEMOTION_ZIP = "https://github.com/mmalekzadeh/motion-sense/raw/master/data/A_DeviceMotion_data.zip"
+RAW_DEMO_CSV = "https://raw.githubusercontent.com/akiroussama/PrivIMU/main/examples/demo_motionsense_like.csv"
+
 st.set_page_config(page_title="PrivIMU", page_icon="🛡️", layout="wide")
 
 MODEL_PATH = Path("models/rf.joblib")
 
+
+
+
+def render_csv_help_box() -> None:
+    """Show copy-paste links for CSV input files."""
+
+    st.markdown(
+        f"""
+        **Need a CSV to test the upload?**
+
+        - Demo CSV from this repo: [demo_motionsense_like.csv]({RAW_DEMO_CSV})
+        - Official MotionSense repo: [mmalekzadeh/motion-sense]({OFFICIAL_MOTIONSENSE_REPO})
+        - Official DeviceMotion ZIP: [A_DeviceMotion_data.zip]({OFFICIAL_DEVICEMOTION_ZIP})
+
+        For a real MotionSense file, download and unzip `A_DeviceMotion_data.zip`,
+        then upload for example `A_DeviceMotion_data/wlk_7/sub_1.csv`.
+        """
+    )
+    if EXAMPLE_CSV_PATH.exists():
+        st.download_button(
+            "Download demo CSV",
+            data=EXAMPLE_CSV_PATH.read_bytes(),
+            file_name="demo_motionsense_like.csv",
+            mime="text/csv",
+            help="Synthetic MotionSense-like file for testing the upload UI only.",
+        )
 
 def load_rf_model():
     if MODEL_PATH.exists():
@@ -81,6 +112,7 @@ with st.sidebar:
     fallback_subject = st.slider("Demo subject ID", 1, 24, 7)
     sigma = st.slider("Gaussian noise defense σ", 0.0, 1.0, 0.0, 0.05)
     uploaded = st.file_uploader("Upload MotionSense-like CSV", type=["csv"])
+    render_csv_help_box()
 
 if uploaded is not None:
     signal = load_uploaded_signal(uploaded)

@@ -15,6 +15,8 @@
 | Google Colab | `https://colab.research.google.com/github/akiroussama/PrivIMU/blob/main/notebooks/PrivIMU_MotionSense_Demo.ipynb` |
 | Streamlit entrypoint | `streamlit_app.py` |
 | Streamlit suggested subdomain | `privimu` |
+| Demo CSV for Streamlit upload | `https://raw.githubusercontent.com/akiroussama/PrivIMU/main/examples/demo_motionsense_like.csv` |
+| Official MotionSense DeviceMotion ZIP | `https://github.com/mmalekzadeh/motion-sense/raw/master/data/A_DeviceMotion_data.zip` |
 
 ## Why this project matters
 
@@ -51,6 +53,9 @@ This repository is initialized as a full reproducibility scaffold. The metrics b
 | Ethics and limits | `docs/ETHICS_AND_LIMITS.md` | responsible framing |
 | Artifact index | `ARTIFACT_INDEX.md` | single map of every output |
 | Slides draft | `slides/slides.md` | Marp-ready 15-slide story |
+| Final PowerPoint | `slides/PrivIMU_final.pptx` | polished 15-slide presentation |
+| Final PDF slides | `slides/PrivIMU_final.pdf` | PDF version for submission |
+| Streamlit demo CSV | `examples/demo_motionsense_like.csv` | upload-test CSV for the app |
 | Speaker notes | `slides/speaker_notes/` | 5 members × 3 minutes |
 | Report draft | `report/PrivIMU_report.md` | 6–8 page report skeleton |
 

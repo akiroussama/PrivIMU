@@ -32,3 +32,5 @@ This file is the professor-facing map of the whole project. Every artifact shoul
 ## Submission principle
 
 The professor should be able to open this file and verify the effort in less than two minutes.
+
+| Deployment guide | `docs/DEPLOYMENT.md` | Colab and Streamlit deployment values |

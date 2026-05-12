@@ -48,7 +48,7 @@ def main(argv: list[str] | None = None) -> int:
 
     download_file(args.url, args.archive)
     extract_zip(args.archive, args.dest, force=args.force)
-    print("[PrivIMU] Done. You can now run: make train-rf")
+    print("[PrivIMU] Done. Next: python -m privimu.train --data-root data/raw/motionsense --model rf --output-dir .")
     return 0
 
 

@@ -6,6 +6,16 @@
 [![Python](https://img.shields.io/badge/python-3.11%2B-brightgreen)](pyproject.toml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-lightgrey)](LICENSE)
 
+
+## One-click links
+
+| Target | Link / value |
+|---|---|
+| GitHub repo | `https://github.com/akiroussama/PrivIMU` |
+| Google Colab | `https://colab.research.google.com/github/akiroussama/PrivIMU/blob/main/notebooks/PrivIMU_MotionSense_Demo.ipynb` |
+| Streamlit entrypoint | `streamlit_app.py` |
+| Streamlit suggested subdomain | `privimu` |
+
 ## Why this project matters
 
 Smartphones, smartwatches, health trackers, sport apps, and many IoT systems collect motion data. These traces are often treated as *anonymous* because they do not contain a name, email address, phone number, or face. PrivIMU tests a stronger question:
@@ -73,6 +83,30 @@ python -m privimu.train \
   --n-splits 5
 
 # 6) Launch the live demo
+streamlit run streamlit_app.py
+```
+
+### Windows PowerShell shortcut
+
+GNU `make` is not installed by default on Windows. Use the included PowerShell task runner instead:
+
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install --upgrade pip
+python -m pip install -e ".[dev,app]"
+
+pytest -q
+.\task.ps1 download
+.\task.ps1 train-rf
+.\task.ps1 demo
+```
+
+Equivalent direct commands are:
+
+```powershell
+python data/download.py --dest data/raw/motionsense
+python -m privimu.train --data-root data/raw/motionsense --model rf --output-dir . --window-size 50 --step-size 25 --n-splits 5
 streamlit run streamlit_app.py
 ```
 

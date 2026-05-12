@@ -1,0 +1,17 @@
+{
+  "project": "PrivIMU",
+  "generated_at_utc": "GENERATED_BY_SCRIPT",
+  "dataset": {
+    "name": "MotionSense",
+    "n_subjects": 24,
+    "activities": ["dws", "jog", "sit", "std", "ups", "wlk"]
+  },
+  "primary_result": {
+    "model": "random_forest",
+    "top1_accuracy": "GENERATED_BY_SCRIPT",
+    "top3_accuracy": "GENERATED_BY_SCRIPT",
+    "f1_macro": "GENERATED_BY_SCRIPT",
+    "latency_ms_per_window": "GENERATED_BY_SCRIPT",
+    "privacy_entropy_leakage_bits_mean": "GENERATED_BY_SCRIPT"
+  }
+}

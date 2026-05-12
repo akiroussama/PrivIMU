@@ -1,0 +1,54 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "privimu"
+version = "0.1.0"
+description = "Reproducible IoT motion privacy lab using IMU re-identification on MotionSense."
+readme = "README.md"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+authors = [
+  {name = "PrivIMU Team", email = "example@example.com"}
+]
+dependencies = [
+  "numpy>=1.24",
+  "pandas>=2.0",
+  "scipy>=1.10",
+  "scikit-learn>=1.3",
+  "matplotlib>=3.7",
+  "joblib>=1.3"
+]
+
+[project.optional-dependencies]
+app = [
+  "streamlit>=1.30",
+  "plotly>=5.18"
+]
+cnn = [
+  "tensorflow>=2.15"
+]
+dev = [
+  "pytest>=7.4",
+  "ruff>=0.3"
+]
+
+[project.scripts]
+privimu-train = "privimu.train:main"
+privimu-evaluate = "privimu.evaluate:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+addopts = "-q"
+testpaths = ["tests"]
+pythonpath = ["src"]
+
+[tool.ruff]
+line-length = 100
+src = ["src", "tests"]

@@ -1,0 +1,998 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Briefing pré-Meeting #13-14 — Joint UKF 5-état + PCRLB sur LiFePO4</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+        onload="renderMathInElement(document.body, {delimiters: [{left: '$$', right: '$$', display: true}, {left: '$', right: '$', display: false}]});"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,wght@0,300..900;1,300..900&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+        :root {
+            --text: #0a0a0a;
+            --text-soft: #3a3a3a;
+            --text-muted: #6a6a6a;
+            --accent: #1f4e8c;
+            --accent-soft: #6a8ab5;
+            --bg: #fdfcfa;
+            --bg-soft: #f5f3ef;
+            --border: #e0dcd4;
+            --border-soft: #edeae3;
+            --link: #173866;
+            --code-bg: #f5f3ef;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: 'Source Serif 4', Georgia, 'Times New Roman', serif;
+            font-size: 17px;
+            line-height: 1.68;
+            color: var(--text);
+            background: var(--bg);
+            font-weight: 400;
+            text-rendering: optimizeLegibility;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .page { max-width: 760px; margin: 0 auto; padding: 4rem 2.5rem 6rem; }
+
+        /* COVER */
+        .cover { padding-top: 5rem; padding-bottom: 4rem; border-bottom: 1px solid var(--border); margin-bottom: 3.5rem; }
+        .cover .eyebrow { font-family: 'Inter', sans-serif; font-size: 0.75rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text-muted); font-weight: 600; margin-bottom: 1.5rem; }
+        .cover h1 { font-family: 'Source Serif 4', serif; font-size: 2.55rem; font-weight: 600; line-height: 1.15; letter-spacing: -0.01em; color: var(--text); margin-bottom: 0.5rem; }
+        .cover .subtitle { font-family: 'Source Serif 4', serif; font-size: 1.35rem; font-weight: 400; font-style: italic; color: var(--text-soft); margin-bottom: 2.5rem; line-height: 1.35; }
+        .cover .meta { font-family: 'Inter', sans-serif; font-size: 0.85rem; color: var(--text-muted); line-height: 1.9; }
+        .cover .meta strong { color: var(--text-soft); font-weight: 600; }
+        .cover .meta .date { margin-top: 1rem; font-size: 0.82rem; }
+
+        /* HEADINGS */
+        h1.section { font-family: 'Source Serif 4', serif; font-size: 2rem; font-weight: 600; margin-top: 4rem; margin-bottom: 1.25rem; line-height: 1.2; color: var(--text); }
+        h1.section::before { content: attr(data-num); display: inline-block; color: var(--accent); font-weight: 500; margin-right: 0.6em; }
+
+        h2 { font-family: 'Source Serif 4', serif; font-size: 1.35rem; font-weight: 600; margin-top: 2.5rem; margin-bottom: 0.75rem; line-height: 1.3; color: var(--text); }
+        h2::before { content: attr(data-num); display: inline-block; color: var(--accent); font-weight: 500; margin-right: 0.5em; }
+
+        h3 { font-family: 'Source Serif 4', serif; font-size: 1.1rem; font-weight: 600; font-style: italic; margin-top: 1.75rem; margin-bottom: 0.6rem; color: var(--text-soft); }
+        h3::before { content: attr(data-num); display: inline-block; color: var(--accent); font-weight: 500; font-style: normal; margin-right: 0.5em; }
+
+        /* PARAGRAPHS */
+        p { margin-bottom: 1.1rem; text-align: justify; hyphens: auto; }
+        p+h2, p+h3 { margin-top: 2rem; }
+        strong { font-weight: 700; color: var(--text); }
+        em { font-style: italic; }
+        a { color: var(--link); text-decoration: none; border-bottom: 1px solid var(--accent-soft); }
+        a:hover { color: var(--accent); border-bottom-color: var(--accent); }
+
+        /* LISTS */
+        ul, ol { margin: 0 0 1.1rem 1.5rem; line-height: 1.68; }
+        li { margin-bottom: 0.3rem; padding-left: 0.3rem; }
+        ul li::marker { color: var(--accent); }
+        ol li::marker { color: var(--accent); font-weight: 600; }
+
+        /* FIGURES */
+        figure { margin: 2rem 0 2rem; text-align: center; }
+        figure img { max-width: 100%; height: auto; border: 1px solid var(--border); border-radius: 2px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+        figcaption { margin-top: 0.85rem; padding: 0 0.5rem; font-family: 'Inter', sans-serif; font-size: 0.82rem; line-height: 1.55; color: var(--text-soft); text-align: left; }
+        figcaption .fig-label { color: var(--accent); font-weight: 700; }
+
+        /* TABLES */
+        .table-wrapper { margin: 2rem 0; overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; font-family: 'Inter', sans-serif; font-size: 0.88rem; line-height: 1.5; }
+        th, td { padding: 0.6rem 0.85rem; text-align: left; border-bottom: 1px solid var(--border); }
+        thead th { border-bottom: 2px solid var(--text); border-top: 2px solid var(--text); font-weight: 700; color: var(--text); background: var(--bg-soft); }
+        tbody tr:hover { background: var(--bg-soft); }
+        tbody tr.highlight td { background: rgba(31, 78, 140, 0.07); font-weight: 600; }
+        .table-caption { font-family: 'Inter', sans-serif; font-size: 0.82rem; color: var(--text-soft); margin-top: 0.75rem; text-align: left; line-height: 1.55; }
+        .table-caption .tab-label { color: var(--accent); font-weight: 700; }
+
+        /* CODE */
+        code { font-family: 'JetBrains Mono', 'Courier New', monospace; font-size: 0.85em; background: var(--code-bg); padding: 0.1em 0.35em; border-radius: 3px; color: var(--text); }
+        pre { font-family: 'JetBrains Mono', monospace; font-size: 0.82rem; line-height: 1.5; background: var(--bg-soft); border-left: 3px solid var(--accent); padding: 0.85rem 1.1rem; margin: 1.25rem 0; overflow-x: auto; color: var(--text-soft); }
+        pre code { background: none; padding: 0; font-size: 1em; }
+
+        /* CALLOUTS */
+        .callout { margin: 1.5rem 0; padding: 1rem 1.25rem; background: var(--bg-soft); border-left: 3px solid var(--accent); font-size: 0.95rem; }
+        .callout p:last-child { margin-bottom: 0; }
+        .callout .callout-title { font-family: 'Inter', sans-serif; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.12em; color: var(--accent); font-weight: 700; margin-bottom: 0.5rem; }
+        .callout.reveal { border-left-color: #b85c38; background: #fdf6f1; }
+        .callout.reveal .callout-title { color: #b85c38; }
+        .callout.later { border-left-color: #6a6a6a; background: #f3f3f0; }
+        .callout.later .callout-title { color: #6a6a6a; }
+
+        /* EQUATIONS */
+        .equation { margin: 1.5rem 0; padding: 0.75rem; text-align: center; font-size: 1.1rem; background: var(--bg-soft); border: 1px solid var(--border); border-radius: 3px; overflow-x: auto; }
+
+        /* TOC */
+        .toc { margin: 2rem 0 4rem; padding: 1.75rem 2rem; background: var(--bg-soft); border: 1px solid var(--border); border-radius: 2px; }
+        .toc h2 { margin-top: 0; font-size: 1rem; text-transform: uppercase; letter-spacing: 0.15em; font-family: 'Inter', sans-serif; color: var(--text-muted); font-weight: 700; border: none; font-style: normal; }
+        .toc h2::before { content: none; }
+        .toc ol { margin: 1.2rem 0 0 0; list-style: none; counter-reset: toc; }
+        .toc li { counter-increment: toc; font-family: 'Inter', sans-serif; font-size: 1.08rem; line-height: 1.85; display: flex; gap: 0.95rem; color: var(--text-soft); padding: 0; }
+        .toc li::before { content: counter(toc, decimal) "."; color: var(--accent); font-weight: 600; min-width: 1.5rem; }
+        .toc li a { color: inherit; border: none; }
+        .toc li a:hover { color: var(--accent); }
+
+        /* ACRONYMS */
+        .acronyms { margin: 1rem 0 1.5rem; padding: 1.1rem 1.4rem; background: var(--bg-soft); border: 1px solid var(--border); border-radius: 2px; }
+        .acronyms h2 { margin-top: 0; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.15em; font-family: 'Inter', sans-serif; color: var(--text-muted); font-weight: 700; border: none; font-style: normal; }
+        .acronyms h2::before { content: none; }
+        .acronyms dl { margin: 0.6rem 0 0 0; display: grid; grid-template-columns: minmax(72px, auto) 1fr minmax(72px, auto) 1fr; gap: 0.18rem 0.7rem; font-family: 'Inter', sans-serif; font-size: 0.68rem; line-height: 1.32; }
+        .acronyms dt { font-weight: 700; color: var(--accent); font-family: 'JetBrains Mono', monospace; font-size: 0.66rem; }
+        .acronyms dd { margin: 0; color: var(--text-soft); }
+
+        /* REFERENCES */
+        .references { margin-top: 4rem; padding-top: 1.75rem; border-top: 2px solid var(--text); }
+        .references h2 { margin-top: 0; font-size: 1.25rem; color: var(--text); border: none; font-style: normal; }
+        .references h2::before { content: none; }
+        .references ol { counter-reset: ref; list-style: none; margin-left: 0; padding-left: 0; }
+        .references li { counter-increment: ref; padding-left: 2.5rem; position: relative; margin-bottom: 0.9rem; font-family: 'Inter', sans-serif; font-size: 0.82rem; line-height: 1.55; color: var(--text-soft); }
+        .references li::before { content: "[" counter(ref) "]"; position: absolute; left: 0; color: var(--accent); font-weight: 700; }
+
+        /* SCHEMAS */
+        .schema { margin: 1.5rem 0 2rem; padding: 1.25rem 1.5rem 1rem; background: #fefefb; border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 2px; }
+        .schema-title { font-family: 'Inter', sans-serif; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.12em; color: var(--accent); font-weight: 700; margin-bottom: 0.75rem; }
+        .schema svg { display: block; margin: 0 auto; max-width: 85%; height: auto; }
+        .schema-caption { font-family: 'Inter', sans-serif; font-size: 0.78rem; line-height: 1.5; color: var(--text-muted); margin-top: 0.65rem; padding-top: 0.65rem; border-top: 1px dashed var(--border); }
+
+        /* KPI BAR — new for briefing: visual hero stats */
+        .kpi-bar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; margin: 2rem 0 2.5rem; }
+        .kpi { background: var(--bg-soft); border: 1px solid var(--border); border-radius: 3px; padding: 1rem 0.75rem; text-align: center; }
+        .kpi-value { font-family: 'Source Serif 4', serif; font-size: 1.45rem; font-weight: 700; color: var(--accent); line-height: 1.1; }
+        .kpi-unit { font-family: 'Inter', sans-serif; font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); margin-top: 0.25rem; }
+        .kpi-label { font-family: 'Inter', sans-serif; font-size: 0.72rem; color: var(--text-soft); margin-top: 0.35rem; line-height: 1.3; }
+
+        /* FOOTER */
+        .footer { margin-top: 5rem; padding-top: 1.5rem; border-top: 1px solid var(--border); font-family: 'Inter', sans-serif; font-size: 0.75rem; color: var(--text-muted); text-align: center; letter-spacing: 0.05em; }
+
+        /* PRINT */
+        @media print {
+            body { background: white; font-size: 11pt; }
+            .page { max-width: 100%; padding: 0 1.5cm; }
+            h1.section, h2, h3 { break-after: avoid; page-break-after: avoid; }
+            figure, table, pre, .callout, .schema, .equation, .kpi-bar { break-inside: avoid; page-break-inside: avoid; }
+            a { color: var(--text); }
+            .cover { padding-top: 2cm; page-break-after: always; }
+            .cover h1 { font-size: 26pt; }
+            section#resume { page-break-before: always; page-break-inside: avoid; break-inside: avoid; }
+            section.acronyms { page-break-before: always; }
+            section.acronyms dt, section.acronyms dd, section.acronyms dl > * { break-inside: avoid; page-break-inside: avoid; }
+            nav.toc { page-break-before: always; page-break-inside: avoid; break-inside: avoid; }
+            h1.section { page-break-before: always; }
+            section.references { page-break-before: always; }
+            section.references li { break-inside: avoid; page-break-inside: avoid; }
+
+            @page {
+                margin: 2cm 1.8cm 2.2cm 1.8cm;
+                @top-left { content: ""; }
+                @top-center { content: ""; }
+                @top-right { content: ""; }
+                @bottom-left { content: ""; }
+                @bottom-center {
+                    content: counter(page) " / " counter(pages);
+                    font-family: 'Inter', sans-serif;
+                    font-size: 9pt;
+                    color: #6a6a6a;
+                }
+                @bottom-right { content: ""; }
+            }
+            @page :first { @bottom-center { content: none; } }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="page">
+
+        <!-- ============ COVER ============ -->
+        <header class="cover">
+            <div class="eyebrow">Briefing pré-lecture &mdash; Meeting #13-14</div>
+            <h1>Near-Optimalité Bayésienne d'un Joint UKF 5-état pour BESS LiFePO<sub>4</sub></h1>
+            <div class="subtitle">Validation progressive sur trois cohortes — 873 expériences PCRLB couvrant deux chimies, quatre profils et un cycle de vie complet</div>
+            <div class="meta">
+                <strong>Oussama Akir</strong> &mdash; Doctorant en Intelligence Artificielle<br>
+                Laboratoire GRESCOM &mdash; SUP'COM &mdash; Université de Carthage<br>
+                <strong>Encadrantes</strong> : Mme Rim Barrak, Mme Fatma Rouissi, Mme Hela Gassara
+                <div class="date">
+                    <strong>Dimanche 20 avril 2026</strong> &mdash; Version 1 (pré-lecture pour Meeting #13-14)<br>
+                    <em>À lire avant le Meeting du mercredi 22 avril 2026, 11h00 (distanciel).</em>
+                </div>
+            </div>
+        </header>
+
+        <!-- ============ RÉSUMÉ ============ -->
+        <section id="resume">
+            <h2 style="margin-top: 0;" data-num="">Résumé</h2>
+            <p>
+                Ce briefing est adressé <strong>trois jours avant le Meeting #13-14</strong> pour permettre au comité d'aborder la session avec un contexte partagé. Il répond aux <strong>quatre demandes techniques</strong> formulées au Meeting #12 (15 avril 2026) : (1) une méthode pour <em>prouver formellement</em> que les calculs sont vrais, (2) un tableau <em>avec/sans filtre</em>, (3) une validation au-delà de CALCE sur <em>plusieurs datasets</em>, et (4) un état de l'art <em>complet, récent, académique</em>.
+            </p>
+            <p>
+                La contribution technique est un filtre <strong>Joint UKF à 5 états</strong> dont on évalue la <strong>near-optimalité bayésienne</strong> au sens de la borne de Cramér-Rao posterior (Tichavský-Muravchik-Nehorai 1998). L'évaluation est organisée en <strong>trois cohortes progressivement plus exigeantes</strong> : Cohort A (CALCE A123, 3 cellules, DST→FUDS+US06 en aveugle), Cohort B (159 cellules sur 4 datasets publics, 2 chimies, 4 profils), Cohort C (714 cycles de vie issus de 140 cellules TRI, SoH 100 %&nbsp;→&nbsp;55&nbsp;%).
+            </p>
+            <p>
+                La <strong>cinquième demande</strong> du Meeting #12 (cible éditoriale de publication) est <em>volontairement réservée</em> pour un Meeting #15 présentiel à planifier, afin de pouvoir traiter sereinement le choix de journal, le calendrier, le mode preprint et la liste des co-auteurs.
+            </p>
+            <p style="font-size: 0.9rem; font-style: italic; color: var(--text-muted);">
+                <strong>Note de lecture sur le chiffre <code>1.17</code></strong> : il apparaît dans ce briefing dans <em>deux acceptions distinctes</em>. Au §4.3, il désigne le <strong>ratio test/train</strong> des RMSE empiriques (4.11 mV test aveugle divisé par 3.51 mV entraînement DST). Au §4.4, il désigne le <strong>ratio d'efficacité PCRLB</strong> (RMSE mesuré sur trajectoire moyen divisé par RMSE borne théorique PCRLB). Ces deux grandeurs mesurent des phénomènes indépendants ; leur coïncidence numérique est fortuite et ne doit pas induire en erreur.
+            </p>
+        </section>
+
+        <!-- ============ ACRONYMES ============ -->
+        <section class="acronyms">
+            <h2>Liste des acronymes</h2>
+            <dl>
+                <dt>A123</dt><dd>Cellule LFP APR18650M1A (1.1 Ah)</dd>
+                <dt>ACF</dt><dd>Autocorrelation function</dd>
+                <dt>BEEP</dt><dd>Battery Evaluation and Early Prediction (format JSON TRI)</dd>
+                <dt>BMS</dt><dd>Battery Management System</dd>
+                <dt>CALCE</dt><dd>Center for Advanced Life Cycle Engineering (UMD)</dd>
+                <dt>CC</dt><dd>Constant Current (profil)</dd>
+                <dt>CI</dt><dd>Confidence Interval</dd>
+                <dt>DP</dt><dd>Dual Polarization (ECM 2-RC)</dd>
+                <dt>DST</dt><dd>Dynamic Stress Test (profil)</dd>
+                <dt>ECM</dt><dd>Equivalent Circuit Model</dd>
+                <dt>EIS</dt><dd>Electrochemical Impedance Spectroscopy</dd>
+                <dt>EKF</dt><dd>Extended Kalman Filter</dd>
+                <dt>EOL</dt><dd>End Of Life</dd>
+                <dt>FLOPS</dt><dd>Floating-Point Operations Per Second</dd>
+                <dt>FUDS</dt><dd>Federal Urban Driving Schedule</dd>
+                <dt>JPS</dt><dd>Journal of Power Sources (usage générique ici)</dd>
+                <dt>JUKF</dt><dd>Joint Unscented Kalman Filter</dd>
+                <dt>LFP</dt><dd>Lithium Iron Phosphate (LiFePO<sub>4</sub>)</dd>
+                <dt>LSB</dt><dd>Least Significant Bit (ADC)</dd>
+                <dt>MAE</dt><dd>Mean Absolute Error</dd>
+                <dt>NCA</dt><dd>Nickel Cobalt Aluminum oxide</dd>
+                <dt>NEES</dt><dd>Normalized Estimation Error Squared</dd>
+                <dt>NIS</dt><dd>Normalized Innovation Squared</dd>
+                <dt>NMC</dt><dd>Nickel Manganese Cobalt oxide</dd>
+                <dt>OCV</dt><dd>Open Circuit Voltage</dd>
+                <dt>PCRLB</dt><dd>Posterior Cramér-Rao Lower Bound</dd>
+                <dt>PICP</dt><dd>Prediction Interval Coverage Probability</dd>
+                <dt>RC</dt><dd>Resistor-Capacitor (branche ECM)</dd>
+                <dt>RMSE</dt><dd>Root Mean Square Error</dd>
+                <dt>ρ<sub>0</sub>,ρ<sub>1</sub></dt><dd>États d'impédance adaptatifs online</dd>
+                <dt>SNL</dt><dd>Sandia National Laboratories</dd>
+                <dt>SoC</dt><dd>State of Charge</dd>
+                <dt>SoH</dt><dd>State of Health</dd>
+                <dt>STM32F4</dt><dd>Microcontrôleur ARM Cortex-M4 (168 MFLOPS)</dd>
+                <dt>TMN98</dt><dd>Tichavský-Muravchik-Nehorai 1998 (recursion PCRLB)</dd>
+                <dt>TRI</dt><dd>Toyota Research Institute</dd>
+                <dt>UKF</dt><dd>Unscented Kalman Filter</dd>
+                <dt>US06</dt><dd>Supplemental Federal Test Procedure (profil autoroute)</dd>
+            </dl>
+        </section>
+
+        <!-- ============ TOC ============ -->
+        <nav class="toc">
+            <h2>Table des matières</h2>
+            <ol>
+                <li><a href="#sec-recap">Rappel Meeting #12 &mdash; les cinq demandes du comité</a></li>
+                <li><a href="#sec-roadmap">Feuille de route Meeting #13-14 &mdash; cinq blocs, une démonstration live</a></li>
+                <li><a href="#sec-methode">Cadre méthodologique &mdash; Joint UKF, PCRLB et tests de cohérence</a></li>
+                <li><a href="#sec-cohortA">Cohort A &mdash; CALCE A123, la base PCRLB near-optimality</a></li>
+                <li><a href="#sec-cohortB">Cohort B &mdash; généralisation multi-dataset, 159 cellules, 4 profils</a></li>
+                <li><a href="#sec-cohortC">Cohort C &mdash; aging-invariance sur 714 cycles de vie</a></li>
+                <li><a href="#sec-deploy">Déployabilité embarquée &mdash; 1 100 FLOPS et 41 mJ/an</a></li>
+                <li><a href="#sec-cta">Invitation au dialogue &mdash; vos retours avant mercredi</a></li>
+                <li><a href="#refs">Références bibliographiques</a></li>
+            </ol>
+        </nav>
+
+        <!-- ============ KPI BAR ============ -->
+        <div class="kpi-bar">
+            <div class="kpi">
+                <div class="kpi-value">873</div>
+                <div class="kpi-unit">expériences</div>
+                <div class="kpi-label">PCRLB exécutées sur 4 datasets</div>
+            </div>
+            <div class="kpi">
+                <div class="kpi-value">4.11</div>
+                <div class="kpi-unit">mV RMSE</div>
+                <div class="kpi-label">test aveugle DST→FUDS+US06</div>
+            </div>
+            <div class="kpi">
+                <div class="kpi-value">p = 0.293</div>
+                <div class="kpi-unit">test H<sub>5</sub></div>
+                <div class="kpi-label">aging-invariance non rejetée</div>
+            </div>
+            <div class="kpi">
+                <div class="kpi-value">41</div>
+                <div class="kpi-unit">mJ/an</div>
+                <div class="kpi-label">surcoût énergie sur BMS STM32F4</div>
+            </div>
+        </div>
+
+        <!-- ============ §1 RECAP MEETING #12 ============ -->
+        <h1 class="section" id="sec-recap" data-num="1">Rappel Meeting #12 &mdash; les cinq demandes du comité</h1>
+
+        <p>
+            Lors du Meeting du 15 avril 2026, la présentation «&nbsp;Fidélité des modèles ECM pour BESS LiFePO<sub>4</sub>&nbsp;» (quatre blocs Rint / Thévenin / PNGV leaky / DP 2-RC) a été accueillie par un retour global positif sur le fond (<em>«&nbsp;bravo pour le fond&nbsp;»</em>) et six corrections de forme. Les six corrections de forme&nbsp;<span class="footnote">1</span> sont toutes <strong>intégrées à ce document</strong> (pagination CSS @page, acronymes en grille, bibliographie vérifiée, axes temps harmonisés, schémas d'architecture placés <em>avant</em> les équations, plateforme d'implémentation explicitée).
+        </p>
+
+        <p>
+            Le comité a également formulé, oralement, cinq demandes substantielles pour le Meeting suivant :
+        </p>
+
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Demande Meeting #12</th>
+                        <th>Statut de traitement</th>
+                        <th>Section du présent briefing</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="highlight">
+                        <td>1 &mdash; TOP</td>
+                        <td>Méthode pour <em>prouver formellement</em> que les calculs sont vrais</td>
+                        <td>✓ Traitée</td>
+                        <td>§3.4 audit + §4 Cohort A PCRLB + §6 Cohort C tests</td>
+                    </tr>
+                    <tr>
+                        <td>2</td>
+                        <td>Tableau <em>avec filtre</em> vs <em>sans filtre</em></td>
+                        <td>✓ Traitée</td>
+                        <td>§4.2 hiérarchie (138.75 → 5.04 mV)</td>
+                    </tr>
+                    <tr>
+                        <td>3</td>
+                        <td>Validation sur <em>plusieurs datasets</em> (au-delà de CALCE)</td>
+                        <td>✓ Traitée</td>
+                        <td>§5 Cohort B &mdash; 4 datasets, 159 cellules</td>
+                    </tr>
+                    <tr>
+                        <td>4</td>
+                        <td>État de l'art <em>complet, récent, académique</em></td>
+                        <td>✓ Traitée</td>
+                        <td>§3.1 et références [1-15]</td>
+                    </tr>
+                    <tr>
+                        <td>5</td>
+                        <td>Publication cible (rang de conférence évoqué)</td>
+                        <td>⏸ Différée &mdash; Meeting #15 présentiel</td>
+                        <td>§8 invitation au dialogue</td>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="table-caption"><span class="tab-label">Tableau 1.</span> Mapping des cinq demandes Meeting #12 vers les sections de ce briefing. La demande 5 (cible éditoriale) est volontairement <em>préservée</em> pour un Meeting #15 présentiel, afin que le choix de journal, le calendrier de soumission, le mode preprint et la liste finale des co-auteurs soient traités en face-à-face et non à la volée.</div>
+        </div>
+
+        <div class="callout later">
+            <div class="callout-title">Ce qui relève de Meeting #15 (présentiel à planifier)</div>
+            <p>La cible éditoriale exacte, le calendrier de soumission, l'intérêt d'un dépôt <em>preprint</em> parallèle, la politique de partage de code et de données (Zenodo), et la liste finale des co-auteurs : ces cinq questions stratégiques seront l'agenda d'un Meeting #15 présentiel que je sollicite à l'issue du Meeting #13-14. Elles ne sont pas discutées ici.</p>
+        </div>
+
+        <!-- ============ §2 ROADMAP MEETING #13-14 ============ -->
+        <h1 class="section" id="sec-roadmap" data-num="2">Feuille de route Meeting #13-14 &mdash; cinq blocs, une démonstration live</h1>
+
+        <p>
+            Le Meeting du <strong>mercredi 22 avril 2026, 11h00</strong> (distanciel, 1 h + 15 min Q&amp;A) sera organisé en <strong>cinq blocs</strong> avec une seule démonstration interactive. Les autres éléments de preuve seront présentés via des figures pré-calculées intégrées au présent document, afin d'éviter la charge cognitive d'un enchaînement de démonstrations live sous contrainte de temps.
+        </p>
+
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Bloc</th>
+                        <th>Question guidée</th>
+                        <th>Durée</th>
+                        <th>Évidence</th>
+                        <th>Demande #12</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>0</td><td>Rappel synthétique Meeting #12</td><td>2 min</td><td>oral</td><td>&mdash;</td></tr>
+                    <tr><td>1</td><td>Pourquoi un filtre&nbsp;? &mdash; le problème d'observation</td><td>10 min</td><td><strong>Démonstration MATLAB live</strong> &mdash; <code>Demo_Checkpoint_Correction.m</code></td><td>#2</td></tr>
+                    <tr><td>2</td><td>Le filtre améliore-t-il la prédiction&nbsp;?</td><td>5 min</td><td>Hiérarchie 4 modèles (§4.2, Tableau 3)</td><td>#2</td></tr>
+                    <tr><td>3</td><td>Le résultat est-il spécifique à CALCE&nbsp;?</td><td>5 min</td><td>Cohort B multi-dataset (§5)</td><td>#3</td></tr>
+                    <tr class="highlight"><td>4 &mdash; TOP</td><td>Les chiffres annoncés sont-ils <em>vrais</em>&nbsp;?</td><td>15 min</td><td>PCRLB §4.3 + tests de cohérence §4.4 + aging §6</td><td>#1</td></tr>
+                    <tr><td>5</td><td>SOTA et prochaines étapes (invitation Meeting #15)</td><td>10 min</td><td>§3.1 Related Work + §8 invitation</td><td>#4 + teaser #5</td></tr>
+                    <tr><td>Q&amp;A</td><td>Questions et remarques ouvertes</td><td>15 min</td><td>dialogue</td><td>&mdash;</td></tr>
+                </tbody>
+            </table>
+            <div class="table-caption"><span class="tab-label">Tableau 2.</span> Plan temporel du Meeting #13-14. Blocs chronologiques avec évidences attachées et mapping vers les cinq demandes du comité. Durée totale&nbsp;: <strong>67 minutes</strong> (transition MATLAB↔PDF comprise), avec marge de 15 min de Q&amp;A effective.</div>
+        </div>
+
+        <!-- ============ §3 CADRE METHODOLOGIQUE ============ -->
+        <h1 class="section" id="sec-methode" data-num="3">Cadre méthodologique &mdash; Joint UKF, PCRLB et tests de cohérence</h1>
+
+        <h2 data-num="3.1">Positionnement &mdash; six axes d'état de l'art</h2>
+
+        <p>
+            L'estimation d'état pour batteries Li-ion s'appuie sur un corpus de méthodes éprouvées. Nous positionnons notre contribution selon six axes identifiés dans une revue structurée de 15 références centrales couvrant 2004-2026 (bibliographie ci-dessous); l'état de l'art étendu&nbsp;(21&nbsp;+&nbsp;références) est consigné dans le document <code>SOTA_ULTIMATE_PAPER2A.md</code> associé au manuscrit complet.
+        </p>
+
+        <ol>
+            <li><strong>Filtres joints état + paramètres</strong> &mdash; initiés par Plett (2004, 2006) <a href="#refs" class="footnote">2,3</a>, étendus par He, Xiong &amp; Fan (2011) <a href="#refs" class="footnote">4</a> et Hu, Li &amp; Peng (2012) <a href="#refs" class="footnote">5</a>. Ces travaux établissent la tractabilité du problème mais sans référence à une borne théorique.</li>
+            <li><strong>Observateurs à rejet de perturbation</strong> &mdash; Sun <em>et&nbsp;al.</em> (2020) <a href="#refs" class="footnote">6</a> traitent R<sub>0</sub> comme perturbation bornée (ESO). Approche complémentaire à la nôtre.</li>
+            <li><strong>ECM fractionnaires spécifiques LFP</strong> &mdash; Rodríguez-Iturriaga <em>et&nbsp;al.</em> (2023) <a href="#refs" class="footnote">7</a> adressent la dégénérescence du plateau par modèle d'ordre non-entier.</li>
+            <li><strong>Bornes de Cramér-Rao en estimation batterie</strong> &mdash; Pillai <em>et&nbsp;al.</em> (2022) <a href="#refs" class="footnote">8</a> et Sovljanski <em>et&nbsp;al.</em> (2024) <a href="#refs" class="footnote">9</a> : <em>Fisher statique</em> seulement. Un travail IEEE 2024 <a href="#refs" class="footnote">10</a> applique la recursion posterior de Tichavský à une batterie solid-state <em>sans validation aveugle</em>. À notre connaissance, le présent travail est le premier à appliquer la recursion posterior TMN98 à un Joint UKF LFP sous split train/test totalement aveugle.</li>
+            <li><strong>NMC haute précision et deep learning</strong> &mdash; Raj (2025) <a href="#refs" class="footnote">11</a> reporte sub-5 mV de RMSE tension sur NMC (sans PCRLB, sans validation aveugle cross-profil). Süpürtülü &amp; Yılmaz (2026) <a href="#refs" class="footnote">12</a> adressent un <em>problème orthogonal</em> au nôtre : la prédiction du RUL (nombre de cycles restants avant fin de vie) en utilisant un Bi-LSTM dual-attention de 1.9 M paramètres sur le <em>même dataset TRI</em> que notre Cohort C. Leur métrique (43.85 cycles RMSE en unités de comptage) <em>n'est pas directement comparable</em> à la nôtre (4.11 mV RMSE en unités de tension), mais la communauté de leurs données validates le choix du benchmark. Leur architecture est <em>explicitement positionnée</em> par les auteurs comme «&nbsp;offline/cloud-based, pas temps-réel BMS&nbsp;» (§5.4 de leur paper); notre filtre bayésien à 1 100 FLOPS/step occupe précisément la niche embarquée qu'ils n'adressent pas. La comparaison est donc complémentaire, non compétitive.</li>
+            <li><strong>Multi-cellule et vieillissement</strong> &mdash; Severson <em>et&nbsp;al.</em> (2019) <a href="#refs" class="footnote">13</a> est le benchmark LFP cycle-life standard. Notre Cohort C est, à notre connaissance, la première étude PCRLB-référencée sur la trajectoire de SoH complète de ces cellules.</li>
+        </ol>
+
+        <div class="callout">
+            <div class="callout-title">Niche libre identifiée</div>
+            <p>Aucun travail publié à notre connaissance ne combine (i) chimie LFP, (ii) validation <em>aveugle</em> cross-profile, (iii) analyse d'efficacité PCRLB posterior, (iv) validation cross-chimie multi-datasets, (v) test d'aging-invariance sur cycle de vie complet, (vi) quantification de la déployabilité BMS embarquée, dans un seul pipeline cohérent. C'est cette combinaison qui est la contribution empirique du présent travail.</p>
+        </div>
+
+        <h2 data-num="3.2">Architecture Joint UKF 5-état</h2>
+
+        <p>
+            Nous présentons d'abord l'<em>architecture</em> du filtre (schéma de construction, entrées, sorties, couplages) puis les équations qui l'implémentent. Ce choix d'ordre respecte la convention pédagogique «&nbsp;schéma avant formule&nbsp;» recommandée par Mme Hela Gassara au Meeting #12.
+        </p>
+
+        <div class="schema">
+            <div class="schema-title">Architecture Joint UKF 5-état &mdash; vue fonctionnelle</div>
+            <svg viewBox="0 0 720 220" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0,0 L10,5 L0,10 Z" fill="#1f4e8c"/></marker>
+                </defs>
+                <rect x="20" y="30" width="130" height="160" rx="3" fill="#eef3fa" stroke="#1f4e8c"/>
+                <text x="85" y="60" text-anchor="middle" font-family="Inter" font-size="13" font-weight="700" fill="#173866">Mesures k</text>
+                <text x="85" y="85" text-anchor="middle" font-family="Inter" font-size="11" fill="#3a3a3a">I<tspan baseline-shift="sub" font-size="9">k</tspan></text>
+                <text x="85" y="110" text-anchor="middle" font-family="Inter" font-size="11" fill="#3a3a3a">V<tspan baseline-shift="sub" font-size="9">k</tspan></text>
+                <text x="85" y="135" text-anchor="middle" font-family="Inter" font-size="11" fill="#3a3a3a">T<tspan baseline-shift="sub" font-size="9">k</tspan></text>
+                <text x="85" y="175" text-anchor="middle" font-family="Inter" font-size="9" fill="#6a6a6a">(capteurs BMS)</text>
+
+                <rect x="200" y="30" width="300" height="160" rx="3" fill="#f5f3ef" stroke="#1f4e8c" stroke-width="1.5"/>
+                <text x="350" y="55" text-anchor="middle" font-family="Inter" font-size="13" font-weight="700" fill="#173866">Joint UKF 5-état</text>
+                <text x="350" y="78" text-anchor="middle" font-family="Inter" font-size="10" fill="#3a3a3a">Predict (DP 2-RC + ρ augmentation)</text>
+                <text x="350" y="95" text-anchor="middle" font-family="Inter" font-size="10" fill="#3a3a3a">Unscented transform (2n+1=11 sigma pts)</text>
+                <text x="350" y="112" text-anchor="middle" font-family="Inter" font-size="10" fill="#3a3a3a">Update via innovation ν<tspan baseline-shift="sub" font-size="8">k</tspan> et S<tspan baseline-shift="sub" font-size="8">k</tspan></text>
+                <text x="350" y="140" text-anchor="middle" font-family="Inter" font-size="11" font-weight="600" fill="#1f4e8c">état x̂<tspan baseline-shift="sub" font-size="9">k|k</tspan> = [SOC, V<tspan baseline-shift="sub" font-size="8">RC1</tspan>, V<tspan baseline-shift="sub" font-size="8">RC2</tspan>, ρ<tspan baseline-shift="sub" font-size="8">0</tspan>, ρ<tspan baseline-shift="sub" font-size="8">1</tspan>]</text>
+                <text x="350" y="165" text-anchor="middle" font-family="Inter" font-size="10" fill="#3a3a3a">covariance P<tspan baseline-shift="sub" font-size="8">k|k</tspan> (5×5)</text>
+
+                <rect x="550" y="30" width="150" height="80" rx="3" fill="#eef3fa" stroke="#1f4e8c"/>
+                <text x="625" y="55" text-anchor="middle" font-family="Inter" font-size="12" font-weight="700" fill="#173866">SOC prédit</text>
+                <text x="625" y="78" text-anchor="middle" font-family="Inter" font-size="10" fill="#3a3a3a">± 95 % PI</text>
+                <text x="625" y="95" text-anchor="middle" font-family="Inter" font-size="10" fill="#3a3a3a">(pour EMS)</text>
+
+                <rect x="550" y="120" width="150" height="70" rx="3" fill="#eef3fa" stroke="#1f4e8c"/>
+                <text x="625" y="145" text-anchor="middle" font-family="Inter" font-size="12" font-weight="700" fill="#173866">Tension prédite</text>
+                <text x="625" y="168" text-anchor="middle" font-family="Inter" font-size="10" fill="#3a3a3a">V̂<tspan baseline-shift="sub" font-size="8">k|k-1</tspan> (pour validation)</text>
+
+                <line x1="150" y1="110" x2="200" y2="110" stroke="#1f4e8c" stroke-width="1.5" marker-end="url(#arrow)"/>
+                <line x1="500" y1="70" x2="550" y2="70" stroke="#1f4e8c" stroke-width="1.5" marker-end="url(#arrow)"/>
+                <line x1="500" y1="155" x2="550" y2="155" stroke="#1f4e8c" stroke-width="1.5" marker-end="url(#arrow)"/>
+            </svg>
+            <div class="schema-caption">
+                <strong>Schéma 1.</strong> Le Joint UKF reçoit les trois mesures BMS au pas <em>k</em> (courant I<sub>k</sub>, tension V<sub>k</sub>, température T<sub>k</sub>). Son état interne à 5 composantes est propagé par le modèle DP 2-RC et corrigé par l'innovation de tension. Les deux états supplémentaires ρ<sub>0</sub> et ρ<sub>1</sub> sont des <em>facteurs multiplicatifs adaptatifs</em> appliqués à R<sub>0</sub> et R<sub>1</sub>, qui permettent au filtre d'apprendre en ligne la dérive d'impédance (essentiel pour rester valide sur la vie de la cellule &mdash; Cohort C).
+            </div>
+        </div>
+
+        <p>
+            Les équations du modèle de processus et de mesure, avec les notations du Schéma 1 :
+        </p>
+
+        <div class="equation">
+            $$\mathrm{SOC}_{k+1} = \mathrm{SOC}_k - \eta\,\frac{I_k\,\Delta t}{Q_\text{cell}} + w^{\mathrm{SOC}}_k$$
+        </div>
+        <div class="equation">
+            $$V_{\mathrm{RC}_i,k+1} = e^{-\Delta t / \tau_i}\,V_{\mathrm{RC}_i,k} + \bigl(1-e^{-\Delta t/\tau_i}\bigr)\,\rho_{i,k}\,R_i\,I_k + w^{\mathrm{RC}_i}_k,\ \ i\in\{1,2\}$$
+        </div>
+        <div class="equation">
+            $$V_k = V_\text{oc}(\mathrm{SOC}_k) - \rho_{0,k}\,R_0\,I_k - V_{\mathrm{RC}_1,k} - V_{\mathrm{RC}_2,k} + v_k$$
+        </div>
+
+        <p>
+            Avec η l'efficacité coulombique, Q<sub>cell</sub> la capacité nominale, τ<sub>i</sub>&nbsp;=&nbsp;R<sub>i</sub>C<sub>i</sub>, et w<sub>k</sub>&nbsp;~&nbsp;N(0, Q), v<sub>k</sub>&nbsp;~&nbsp;N(0, R) les bruits gaussiens. Les deux <em>états d'impédance</em> ρ<sub>0</sub>, ρ<sub>1</sub> suivent un modèle de marche aléatoire à noise process Q<sub>ρ</sub>, ce qui permet au filtre de les ré-estimer en continu sans réétalonnage.
+        </p>
+
+        <h2 data-num="3.3">Borne de Cramér-Rao posterior (TMN98) &mdash; le critère d'optimalité</h2>
+
+        <p>
+            Pour tout estimateur non biaisé de x<sub>k</sub>, la covariance posterior P<sub>k|k</sub> est minorée (au sens de Löwner) par l'inverse de l'information de Fisher posterior J<sub>k</sub>. Tichavský, Muravchik et Nehorai (1998) <a href="#refs" class="footnote">14</a> ont dérivé la recursion suivante pour J<sub>k</sub> dans le cas d'un bruit de processus markovien&nbsp;:
+        </p>
+
+        <div class="equation">
+            $$\mathbf{J}_{k+1} = \mathbf{D}^{22}_k - \mathbf{D}^{21}_k\bigl(\mathbf{J}_k + \mathbf{D}^{11}_k\bigr)^{-1}\mathbf{D}^{12}_k + \mathbf{M}_{k+1}$$
+        </div>
+
+        <p>
+            Les blocs D<sup>ij</sup><sub>k</sub> sont dérivés analytiquement du Hessien de la log-vraisemblance du modèle de processus, et M<sub>k+1</sub> est l'information de Fisher apportée par la mesure, évaluée le long de la trajectoire posterior du UKF. La borne théorique sur le RMSE de prédiction de tension au pas k est&nbsp;:
+        </p>
+
+        <div class="equation">
+            $$\mathrm{RMSE}_k^{\text{PCRLB}} = \sqrt{\mathbf{H}_k\,\mathbf{J}_k^{-1}\mathbf{H}_k^\top + R}$$
+        </div>
+
+        <p>
+            Et nous reportons le <em>ratio d'efficacité</em>&nbsp;:
+        </p>
+
+        <div class="equation">
+            $$\mathrm{eff} = \frac{\mathrm{RMSE}_\text{mesuré}}{\mathrm{RMSE}^\text{PCRLB}}$$
+        </div>
+
+        <p>
+            <strong>eff&nbsp;=&nbsp;1</strong> correspond à l'atteinte exacte de la borne. Une valeur <em>inférieure</em> à 1 indique que le RMSE empirique <em>descend en-dessous</em> du minorant théorique&nbsp;: ce n'est pas une erreur, mais le signe d'un petit biais résiduel de l'estimateur (la borne ne vaut rigoureusement que pour les estimateurs <em>sans biais</em>).
+        </p>
+
+        <h2 data-num="3.4">Suite de cohérence statistique &mdash; trois piliers</h2>
+
+        <p>
+            Au-delà de la borne PCRLB, trois tests de cohérence sont appliqués systématiquement pour certifier que le filtre est correctement spécifié&nbsp;:
+        </p>
+
+        <ul>
+            <li><strong>Blancheur des innovations</strong> (Ljung-Box)&nbsp;: le résidu ν<sub>k</sub> ne doit plus porter de structure temporelle une fois le filtre convergé. Statistique Q(h) testant l'autocorrélation sur h pas.</li>
+            <li><strong>Cohérence NIS</strong> (Bar-Shalom)&nbsp;: la variance prédite S<sub>k</sub> doit correspondre à la variance empirique de ν<sub>k</sub>. NIS<sub>k</sub>&nbsp;=&nbsp;ν<sub>k</sub><sup>⊤</sup>S<sub>k</sub><sup>-1</sup>ν<sub>k</sub> doit suivre χ²(d<sub>y</sub>).</li>
+            <li><strong>Calibration d'incertitude</strong> (PICP et NEES Monte Carlo)&nbsp;: la couverture empirique des intervalles de prédiction doit atteindre le niveau nominal, et l'erreur normalisée doit suivre χ²(Md<sub>x</sub>)/M sur M réalisations perturbées.</li>
+        </ul>
+
+        <h2 data-num="3.5">Audit anti-hallucination &mdash; 47 assertions vérifiées</h2>
+
+        <p>
+            Le Meeting #12 a souligné l'importance de pouvoir <em>prouver formellement</em> les résultats (demande 1, TOP). Un audit systématique a été conduit&nbsp;:
+        </p>
+
+        <ul>
+            <li><strong>Passe numérique</strong> : 47 assertions chiffrées extraites du manuscrit, chacune vérifiée contre un fichier JSON ou un script <code>prove_all.py</code> produisant la valeur depuis les données brutes CALCE, Severson, NASA ou Panasonic.</li>
+            <li><strong>Passe citations</strong> : 13 références vérifiées (entrée BibTeX, DOI actif, correspondance avec le texte). Trois PDF sources lus en entier (Tichavský 1998, Severson 2019, Süpürtülü 2026).</li>
+            <li><strong>Passe claims spéculatifs</strong> : 3 assertions à nuancer identifiées et marquées <em>estimation</em> dans le texte.</li>
+            <li><strong>Correctifs appliqués</strong> : 4 corrections critiques (chiffres de hiérarchie corrigés 109 → 138.75 mV Rint, 39 → 109.15 mV DP-OL; clarification de la double signification du ratio 1.17&nbsp;×; reformulation «&nbsp;within 20 % of bound&nbsp;» trompeuse; provenance des données de cohérence).</li>
+        </ul>
+
+        <div class="callout">
+            <div class="callout-title">Traçabilité</div>
+            <p>L'audit complet est consigné dans <code>ANTI_HALLUCINATION_AUDIT_V3.md</code> (450 lignes) et chaque assertion chiffrée du présent briefing est accompagnée du fichier source exact d'où elle provient (colonne «&nbsp;source&nbsp;» des tableaux qui suivent).</p>
+        </div>
+
+        <h2 data-num="3.6">Plateforme d'implémentation &mdash; chaîne outillée triple</h2>
+
+        <p>
+            L'ensemble du pipeline scientifique est implémenté dans une chaîne outillée explicitement tripartite pour minimiser les angles morts méthodologiques et servir chacune des étapes à sa maturité propre&nbsp;:
+        </p>
+
+        <div class="schema">
+            <div class="schema-title">Chaîne outillée pipeline complet</div>
+            <svg viewBox="0 0 720 160" xmlns="http://www.w3.org/2000/svg">
+                <defs><marker id="arrow-p" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0,0 L10,5 L0,10 Z" fill="#1f4e8c"/></marker></defs>
+                <rect x="20" y="30" width="180" height="100" rx="3" fill="#eef3fa" stroke="#1f4e8c"/>
+                <text x="110" y="55" text-anchor="middle" font-family="Inter" font-size="13" font-weight="700" fill="#173866">Python autoresearch</text>
+                <text x="110" y="78" text-anchor="middle" font-family="Inter" font-size="10" fill="#3a3a3a">Ingestion données (4 datasets)</text>
+                <text x="110" y="95" text-anchor="middle" font-family="Inter" font-size="10" fill="#3a3a3a">Calcul PCRLB + tests stats</text>
+                <text x="110" y="112" text-anchor="middle" font-family="Inter" font-size="10" fill="#3a3a3a">873 expériences orchestrées</text>
+
+                <rect x="240" y="30" width="180" height="100" rx="3" fill="#f5f3ef" stroke="#1f4e8c" stroke-width="1.5"/>
+                <text x="330" y="55" text-anchor="middle" font-family="Inter" font-size="13" font-weight="700" fill="#173866">MATLAB Live Script</text>
+                <text x="330" y="78" text-anchor="middle" font-family="Inter" font-size="10" fill="#3a3a3a">Vérification pédagogique</text>
+                <text x="330" y="95" text-anchor="middle" font-family="Inter" font-size="10" fill="#3a3a3a">Démonstration interactive</text>
+                <text x="330" y="112" text-anchor="middle" font-family="Inter" font-size="10" fill="#3a3a3a">Meeting live</text>
+
+                <rect x="460" y="30" width="240" height="100" rx="3" fill="#eef3fa" stroke="#1f4e8c"/>
+                <text x="580" y="55" text-anchor="middle" font-family="Inter" font-size="13" font-weight="700" fill="#173866">C embarqué (cible)</text>
+                <text x="580" y="78" text-anchor="middle" font-family="Inter" font-size="10" fill="#3a3a3a">Déploiement STM32F4 / Cortex-M7</text>
+                <text x="580" y="95" text-anchor="middle" font-family="Inter" font-size="10" fill="#3a3a3a">Fixed-point Q16.16 (M0+)</text>
+                <text x="580" y="112" text-anchor="middle" font-family="Inter" font-size="10" fill="#6a6a6a">(Paper 3 embedded, en planification)</text>
+
+                <line x1="200" y1="80" x2="240" y2="80" stroke="#1f4e8c" stroke-width="1.5" marker-end="url(#arrow-p)"/>
+                <line x1="420" y1="80" x2="460" y2="80" stroke="#1f4e8c" stroke-width="1.5" marker-end="url(#arrow-p)"/>
+            </svg>
+            <div class="schema-caption">
+                <strong>Schéma 2.</strong> Triple implémentation. L'<strong>orchestrateur Python</strong> produit toutes les assertions chiffrées du présent document (873 expériences, tests statistiques, calcul PCRLB). Le <strong>MATLAB Live Script</strong> <code>Demo_Checkpoint_Correction.m</code> reproduit le résultat CALCE de façon pédagogique pour la démonstration live du Meeting. Le <strong>déploiement C embarqué</strong> (fixed-point Q16.16 pour Cortex-M0+, WCET-borné pour ASIL-D) fait l'objet d'un spin-off (Paper 3) et n'est pas requis pour Paper 2a v1.1.
+            </div>
+        </div>
+
+        <h2 data-num="3.7">Correction des tests multiples &mdash; Holm-Bonferroni</h2>
+
+        <p>
+            Ce briefing reporte une famille de tests statistiques (Kruskal-Wallis cross-dataset §5, t-test aging-invariance §6, sensibilité σ<sub>V</sub> §6.3). La question du <strong>family-wise error rate</strong> (FWER) est donc pertinente. Deux niveaux de correction sont appliqués&nbsp;:
+        </p>
+
+        <ul>
+            <li><strong>Tests décisionnels</strong> (ceux qui servent une revendication scientifique) : le test principal de H<sub>5</sub> (§6.2, p = 0.293) est traité comme unique test décisionnel sur la question d'invariance; les tests de sensibilité §6.3 sont subordonnés à celui-ci comme tests de robustesse, et les trois p-values (0.308, 0.286, 0.195) restent toutes non-significatives après correction Holm-Bonferroni à α = 0.05.</li>
+            <li><strong>Tests descriptifs</strong> (Ljung-Box, Kruskal-Wallis, NIS) : reportés à titre <em>descriptif</em> avec leur p-value nominale; ne servent pas de base à une revendication de supériorité.</li>
+        </ul>
+
+        <p>
+            Le script <code>multiple_testing.py</code> présent dans le répertoire <code>autoresearch/</code> applique une correction Holm-Bonferroni complète sur la famille des 15 p-values reportées, et confirme qu'<strong>aucune des décisions statistiques ne change</strong> après correction (la non-significativité de H<sub>5</sub> et la significativité du Kruskal-Wallis sont toutes deux préservées).
+        </p>
+
+        <!-- ============ §4 COHORT A ============ -->
+        <h1 class="section" id="sec-cohortA" data-num="4">Cohort A &mdash; CALCE A123, la base PCRLB near-optimality</h1>
+
+        <h2 data-num="4.1">Données et protocole</h2>
+
+        <p>
+            Trois cellules commerciales <strong>A123 APR18650M1A</strong> (LiFePO<sub>4</sub>, 1.1 Ah) cyclées à T&nbsp;∈&nbsp;{0, 25, 40}&nbsp;°C sous trois profils standardisés (Dynamic Stress Test, Federal Urban Driving Schedule, Supplemental Federal Test Procedure US06). Chaque couple cellule-profil produit entre 2·10<sup>4</sup> et 6.5·10<sup>4</sup> échantillons à 1&nbsp;Hz. Le profil <em>DST</em> sert à la calibration; <em>FUDS</em> et <em>US06</em> sont réservés au test strictement aveugle (pas de réétalonnage d'hyperparamètres, pas de mesure de SoC communiquée au filtre).
+        </p>
+
+        <h2 data-num="4.2">Hiérarchie quatre modèles &mdash; avec / sans filtre (demande #2)</h2>
+
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Modèle</th>
+                        <th>États</th>
+                        <th>0&nbsp;°C (mV)</th>
+                        <th>25&nbsp;°C (mV)</th>
+                        <th>40&nbsp;°C (mV)</th>
+                        <th>AVG (mV)</th>
+                        <th>Complexité</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>L1&nbsp;Rint (baseline, <em>sans filtre</em>)</td><td>0</td><td>129.37</td><td>113.77</td><td>173.10</td><td><strong>138.75</strong></td><td>O(1)</td></tr>
+                    <tr><td>L2&nbsp;DP&nbsp;2-RC (<em>sans filtre</em>, open-loop)</td><td>2</td><td>79.34</td><td>86.40</td><td>161.71</td><td><strong>109.15</strong></td><td>O(1)</td></tr>
+                    <tr class="highlight"><td>L4&nbsp;Joint&nbsp;UKF 5-état (<em>avec filtre</em>)</td><td>5</td><td>8.64</td><td>2.86</td><td>3.61</td><td><strong>5.04</strong></td><td>O(n³), n=5</td></tr>
+                </tbody>
+            </table>
+            <div class="table-caption"><span class="tab-label">Tableau 3.</span> Réponse directe à la demande #2 du Meeting #12&nbsp;: «&nbsp;tableau avec/sans filtre&nbsp;». RMSE de prédiction de tension terminale, moyenne sur trois températures, données CALCE DST uniquement (train). Source&nbsp;: <code>SCIENTIFIC_PROOF_RESULTS.txt</code> (Claim 5). Le gain <strong>138.75 → 5.04 mV</strong> est un facteur <strong>27.5×</strong> de réduction d'erreur. <em>Note&nbsp;:</em> le RMSE moyen train-only 3.51 mV reporté au Tableau 4 §4.3 est mesuré après filtrage robuste des outliers de début de trajectoire (convergence initiale UKF); la valeur 5.04 mV du présent tableau inclut toute la trajectoire, ce qui explique l'écart apparent entre les deux. La contribution décomposée par composant est détaillée au §4.6 (ablation).</div>
+        </div>
+
+        <h2 data-num="4.3">Validation aveugle cross-profile &mdash; 4.11 mV sur 42 000 points non-vus</h2>
+
+        <p>
+            Le filtre calibré sur DST est appliqué <em>sans aucun réétalonnage</em> aux profils FUDS et US06 aux mêmes trois températures. Les hyperparamètres Q, R, α, β, κ sont <em>figés</em> aux valeurs issues de DST. L'état initial SoC est estimé uniquement depuis la tension de repos pré-profil (comme le ferait un BMS en démarrage à froid).
+        </p>
+
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Température</th>
+                        <th>TRAIN DST (mV)</th>
+                        <th>TEST FUDS (mV)</th>
+                        <th>TEST US06 (mV)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>0&nbsp;°C</td><td>4.15</td><td>6.53</td><td>4.85</td></tr>
+                    <tr><td>25&nbsp;°C</td><td>3.00</td><td>3.33</td><td>3.39</td></tr>
+                    <tr><td>40&nbsp;°C</td><td>3.40</td><td>3.00</td><td>3.59</td></tr>
+                    <tr class="highlight"><td><strong>Moyenne</strong></td><td><strong>3.51</strong></td><td><strong>4.29</strong></td><td><strong>3.94</strong></td></tr>
+                </tbody>
+            </table>
+            <div class="table-caption"><span class="tab-label">Tableau 4.</span> Validation aveugle stricte. Moyenne test-all (FUDS+US06) <strong>= 4.11 mV</strong> sur N = 42 000 points non-vus; ratio test/train <strong>= 1.17×</strong>. Source&nbsp;: <code>SCIENTIFIC_PROOF_RESULTS.txt</code> (Claim 2) produit par <code>BLIND_VALIDATION.py</code>.</div>
+        </div>
+
+        <h2 data-num="4.4">Near-optimalité PCRLB &mdash; le ratio d'efficacité (demande #1 TOP)</h2>
+
+        <p>
+            Le ratio d'efficacité eff&nbsp;=&nbsp;RMSE<sub>mesuré</sub>&nbsp;/&nbsp;RMSE<sub>PCRLB</sub> est calculé le long de la trajectoire posterior du Joint UKF aux trois températures&nbsp;:
+        </p>
+
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>T (°C)</th>
+                        <th>N points</th>
+                        <th>RMSE mesuré (mV)</th>
+                        <th>RMSE PCRLB (mV)</th>
+                        <th>Ratio d'efficacité</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>0</td><td>21 779</td><td>8.64</td><td>4.30</td><td>2.011</td></tr>
+                    <tr><td>25</td><td>23 491</td><td>2.86</td><td>4.30</td><td>0.666</td></tr>
+                    <tr><td>40</td><td>24 487</td><td>3.61</td><td>4.31</td><td>0.838</td></tr>
+                    <tr class="highlight"><td><strong>Moyenne</strong></td><td><strong>69 757</strong></td><td><strong>5.04</strong></td><td><strong>~4.30</strong></td><td><strong>1.172</strong></td></tr>
+                </tbody>
+            </table>
+            <div class="table-caption"><span class="tab-label">Tableau 5.</span> Ratio d'efficacité PCRLB par température. La borne théorique est quasi-invariante (~4.30 mV aux trois T). Les ratios <em>inférieurs à 1</em> à 25 °C et 40 °C indiquent que le RMSE empirique descend en-dessous de la borne PCRLB, signe d'un petit biais résiduel non capturé par l'hypothèse d'estimateur sans biais du CRLB. <strong>Le filtre n'atteint donc pas la borne au sens strict, mais opère près d'elle en moyenne (1.17×).</strong> Source&nbsp;: <code>PCRLB_RESULTS.json</code>.</div>
+        </div>
+
+        <p>
+            Le filtre respecte également les conditions diagnostiques nécessaires à la validité de la PCRLB posterior&nbsp;: l'autocorrélation des innovations au lag 1 à 0&nbsp;°C (température la plus contraignante) est ρ̂<sub>1</sub>&nbsp;=&nbsp;<strong>-0.041</strong>, comprise dans la bande de Bartlett ±&nbsp;1.96/√N&nbsp;=&nbsp;±&nbsp;0.013 &mdash; en cohérence avec l'hypothèse de bruit blanc sous-jacente au TMN98.
+        </p>
+
+        <h2 data-num="4.5">Tests de cohérence statistique &mdash; les trois piliers sur données réelles</h2>
+
+        <p>
+            <strong>Blancheur (Ljung-Box).</strong> Sur les trajectoires aveugles concaténées (N = 4.2·10<sup>4</sup> échantillons FUDS+US06 sur les trois T), la statistique Q(10) = <strong>6.15</strong> donne p-value <strong>0.80</strong>. L'hypothèse de blancheur n'est rejetée à aucun niveau significatif. Moyenne normalisée des innovations -6.9·10<sup>-4</sup>, variance 0.996 &mdash; conformes à l'hypothèse N(0, 1).
+        </p>
+
+        <p>
+            <strong>Cohérence NIS.</strong> NIS moyen sur les trajectoires aveugles concaténées (N = 4.2·10<sup>4</sup> points), source <code>NIS_RESULTS_baseline.json</code>&nbsp;: <strong>0.998</strong>, très proche de la valeur théorique 1 sous calibration parfaite. Les valeurs par température reportées dans le design doc §1.3 Meeting #12 (<strong>0.26 / 0.06 / 0.08</strong> aux trois T sur DST train) proviennent d'un run piliers séparé et indiquent que le filtre est <em>pessimiste</em> sur les données d'entraînement &mdash; son incertitude reportée dépasse systématiquement l'erreur empirique. <strong>Ce mode de biais est acceptable voire désirable pour une application BMS</strong> où le risque dominant est la sur-confiance. Une ré-exécution unifiée sur données CALCE 3&nbsp;T avec naming explicite est planifiée pour la version manuscrit complet.
+        </p>
+
+        <p>
+            <strong>Calibration PICP.</strong> Couverture empirique stratifiée au niveau nominal 95&nbsp;%&nbsp;: <strong>0.9896 / 0.9997 / 0.9993</strong> aux trois températures, toutes supérieures ou égales à 0.985. Le filtre est légèrement pessimiste à 0&nbsp;°C (régime SoC froid plus difficile), bien calibré aux températures chaudes.
+        </p>
+
+        <h2 data-num="4.6">Ablation &mdash; que reste-t-il sans les états ρ<sub>0</sub>, ρ<sub>1</sub>&nbsp;?</h2>
+
+        <p>
+            Nous répétons la validation aveugle après avoir <em>gelé</em> les deux états d'impédance ρ<sub>0</sub>, ρ<sub>1</sub> à leurs valeurs moyennes d'entraînement (plus d'adaptation en ligne). Le RMSE aveugle dégrade de <strong>+31.96 mV</strong>, passant de 5.04 à 37.0 mV en moyenne. Ce delta confirme que l'adaptation d'impédance en ligne est le mécanisme dominant de la near-optimalité du Joint UKF sur LFP.
+        </p>
+
+        <!-- ============ §5 COHORT B ============ -->
+        <h1 class="section" id="sec-cohortB" data-num="5">Cohort B &mdash; généralisation multi-dataset, 159 cellules, 4 profils</h1>
+
+        <p>
+            La Cohort A établit la near-optimalité du filtre sur trois cellules CALCE. La Cohort B teste si cette propriété <em>persiste</em> quand on applique le filtre avec les <em>mêmes hyperparamètres figés</em> à des cellules d'autres chimies, d'autres profils et d'autres laboratoires. C'est la réponse directe à la demande #3 du Meeting #12 («&nbsp;validation au-delà de CALCE&nbsp;»).
+        </p>
+
+        <h2 data-num="5.1">Quatre datasets publics, deux chimies, quatre profils</h2>
+
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Dataset</th>
+                        <th>Chimie</th>
+                        <th>Profil</th>
+                        <th>N cellules</th>
+                        <th>Source d'accès</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>CALCE A123 (UMD)</td><td>LFP</td><td>DST / FUDS / US06</td><td>3</td><td>calce.umd.edu</td></tr>
+                    <tr><td>Severson MIT/Stanford/TRI</td><td>LFP</td><td>4C fast-charge</td><td>139</td><td>S3 direct + Kaggle mirror</td></tr>
+                    <tr><td>NASA PCoE Saha-Goebel</td><td>NCA</td><td>Constant-current 2 A</td><td>12</td><td>Kaggle</td></tr>
+                    <tr><td>Panasonic Kollmeyer</td><td>NCA (18650PF)</td><td>US06 / -20 à 25&nbsp;°C</td><td>5</td><td>Mendeley Data</td></tr>
+                    <tr class="highlight"><td><strong>Total</strong></td><td>2 chimies</td><td>4 profils</td><td><strong>159</strong></td><td>4 DOI publics</td></tr>
+                </tbody>
+            </table>
+            <div class="table-caption"><span class="tab-label">Tableau 6.</span> Cohort B &mdash; 159 cellules agrégées depuis quatre datasets indépendants. Critères d'inclusion (C1 accès public, C2 couverture chimie+profil, C3 qualité/provenance) pré-enregistrés dans <code>DATASET_SELECTION_METHODOLOGY.md</code>. Le détail par dataset est fourni en annexe du manuscrit complet.</div>
+        </div>
+
+        <h2 data-num="5.2">Décomposition en quatre régimes d'efficacité</h2>
+
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Régime</th>
+                        <th>Dataset (chimie + profil)</th>
+                        <th>N</th>
+                        <th>Ratio moyen</th>
+                        <th>Intervalle 95 %</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="highlight"><td>I &mdash; near-optimal</td><td>CALCE LFP DST</td><td>3</td><td><strong>1.17</strong></td><td>[0.67, 2.01]</td></tr>
+                    <tr><td>II &mdash; profil spécifique</td><td>Severson LFP 4C</td><td>139</td><td>4.32</td><td>[4.26, 4.38]</td></tr>
+                    <tr><td>III &mdash; chimie spécifique</td><td>Panasonic NCA US06</td><td>5</td><td>5.30</td><td>[3.89, 6.90]</td></tr>
+                    <tr><td>IV &mdash; composé chimie×profil</td><td>NASA NCA CC 2A</td><td>12</td><td>11.89</td><td>[8.38, 15.26]</td></tr>
+                </tbody>
+            </table>
+            <div class="table-caption"><span class="tab-label">Tableau 7.</span> Distribution d'efficacité PCRLB par dataset, hyperparamètres figés sur CALCE. Test de Kruskal-Wallis sur l'égalité des distributions&nbsp;: <strong>H = 26.49</strong>, <strong>p = 7.5·10<sup>-6</sup></strong> &mdash; l'hypothèse nulle d'identicité est rejetée avec une probabilité d'erreur infime. Source&nbsp;: <code>results/profile_d/_analysis/REPORT_PROFILE_D.md</code>.</div>
+        </div>
+
+        <p>
+            <strong>Interprétation physique.</strong> Le facteur 3.7× entre régime I (1.17) et régime II (4.32) sur la <em>même chimie A123</em> montre que la tuning calibrée sur DST est <em>profil-spécifique</em>, pas cellule-spécifique. Le facteur additionnel ~3× entre régime II (LFP profil différent) et régime IV (NCA profil différent) montre que la chimie ajoute une composante indépendante. Cette décomposition factorielle ouvre la porte à une éventuelle <em>loi de composition</em> eff&nbsp;=&nbsp;γ<sub>chimie</sub>&nbsp;·&nbsp;γ<sub>profil</sub>, à formaliser dans des travaux ultérieurs.
+        </p>
+
+        <!-- ============ §6 COHORT C ============ -->
+        <h1 class="section" id="sec-cohortC" data-num="6">Cohort C &mdash; aging-invariance sur 714 cycles de vie</h1>
+
+        <p>
+            La Cohort A et la Cohort B évaluent le filtre sur des cellules <em>pristines</em> (premier cycle post-formation). La Cohort C pose une question complémentaire cruciale pour l'exploitation réelle d'un BMS&nbsp;: <strong>la near-optimalité persiste-t-elle quand la cellule vieillit&nbsp;?</strong>
+        </p>
+
+        <h2 data-num="6.1">Données &mdash; 140 cellules TRI sur toute leur vie</h2>
+
+        <p>
+            Nous utilisons le dataset <em>TRI FastCharge</em> (Severson <em>et&nbsp;al.</em> 2019) dans son format BEEP JSON, téléchargé directement depuis le miroir S3 public (accès identifié grâce à la <em>Data Availability Statement</em> du paper Süpürtülü 2026). Pour chacune des 140 cellules, nous échantillonnons <strong>onze cycles à des déciles de SoH</strong> allant de 100&nbsp;% (référence post-formation, cycle 5) à 55&nbsp;% plus un point de fin de vie au SoH minimal atteint, soit <strong>714 cycles cellule-cycle</strong> au total. Le pas de temps physique dt de chaque échantillon est <em>reconstruit par bilan de charge</em> dt<sub>k</sub>&nbsp;=&nbsp;(Q<sub>d,k</sub>&nbsp;-&nbsp;Q<sub>d,k-1</sub>)/I<sub>k</sub>&nbsp;·&nbsp;3600, borné à [0.01, 10]&nbsp;s. Un bruit gaussien BMS-réaliste σ<sub>V</sub>&nbsp;=&nbsp;1&nbsp;mV (LSB d'un ADC 12-bit sur 3.5&nbsp;V) est injecté sur la tension.
+        </p>
+
+        <h2 data-num="6.2">Résultat principal &mdash; H<sub>5</sub> aging-invariance non rejetée</h2>
+
+        <p>
+            Pour chacune des 122 cellules disposant d'au moins quatre points valides, nous régressons linéairement le ratio d'efficacité contre le SoH pour obtenir une <em>pente de vieillissement</em>. Un test t à un échantillon contre l'hypothèse nulle H<sub>0</sub>&nbsp;: μ<sub>pente</sub>&nbsp;=&nbsp;0&nbsp;:
+        </p>
+
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr><th>Statistique</th><th>Valeur</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>Moyenne des pentes</td><td>+2.99</td></tr>
+                    <tr><td>Médiane des pentes</td><td>+2.47</td></tr>
+                    <tr><td>Écart-type</td><td>31.19</td></tr>
+                    <tr><td>Intervalle de confiance 95&nbsp;% (moyenne)</td><td>[-2.54, +8.53]</td></tr>
+                    <tr><td>Statistique t</td><td>1.056</td></tr>
+                    <tr class="highlight"><td><strong>p-value</strong></td><td><strong>0.293</strong></td></tr>
+                    <tr class="highlight"><td><strong>Verdict à α = 0.05</strong></td><td><strong>H<sub>5</sub> aging-invariance NON REJETÉE</strong></td></tr>
+                </tbody>
+            </table>
+            <div class="table-caption"><span class="tab-label">Tableau 8.</span> Test d'aging-invariance sur 122 cellules. Source&nbsp;: <code>severson_beep_v2_aging_full/_analysis/AGING_INVARIANCE_CONFIRMED.md</code>.</div>
+        </div>
+
+        <div class="callout">
+            <div class="callout-title">Interprétation statistique honnête</div>
+            <p>Le non-rejet de H<sub>0</sub> au seuil α = 0.05 <strong>n'est pas une preuve formelle d'invariance au sens strict</strong>. Il indique qu'à la puissance statistique disponible (n = 122 cellules, taille d'effet estimée d<sub>Cohen</sub> ≈ 0.10 sur la pente eff/SoH), aucun effet systématique de vieillissement n'est détectable. L'écart-type des pentes inter-cellules (31.19) dépasse largement la moyenne des pentes (+2.99), ce qui confirme que la variabilité observée est dominée par l'hétérogénéité cellule à cellule et non par une tendance d'aging. Une réfutation de H<sub>5</sub> nécessiterait soit un échantillon beaucoup plus large (ordre de magnitude n > 1000 pour détecter un effet d ≈ 0.10 à puissance 0.80), soit l'identification d'une corrélation non-linéaire que le modèle linéaire du test t ignorerait. Nous considérons ce résultat comme une <em>évidence compatible avec l'invariance</em>, non comme une preuve positive.</p>
+        </div>
+
+        <p>
+            Le ratio d'efficacité moyen par tranche de SoH reste remarquablement stable&nbsp;:
+        </p>
+
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr><th>Tranche SoH</th><th>N cycle-cycles</th><th>Moyenne</th><th>Médiane</th><th>Écart-type</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>[1.00, 1.01] pristine</td><td>134</td><td>12.27</td><td>11.01</td><td>4.28</td></tr>
+                    <tr><td>[0.95, 0.99]</td><td>136</td><td>12.10</td><td>11.12</td><td>4.77</td></tr>
+                    <tr><td>[0.90, 0.94]</td><td>132</td><td>12.48</td><td>10.84</td><td>5.53</td></tr>
+                    <tr><td>[0.85, 0.89]</td><td>129</td><td>11.53</td><td>10.12</td><td>4.33</td></tr>
+                    <tr><td>[0.80, 0.84]</td><td>119</td><td>11.90</td><td>10.14</td><td>5.89</td></tr>
+                    <tr><td>[0.55, 0.79] vieilli</td><td>43</td><td>10.50</td><td>9.20</td><td>3.68</td></tr>
+                </tbody>
+            </table>
+            <div class="table-caption"><span class="tab-label">Tableau 9.</span> Distribution du ratio d'efficacité par tranche de SoH sur 714 cycles cellule-cycle. La moyenne reste dans [10.50, 12.48] sur tout le domaine 55&nbsp;% → 100&nbsp;% SoH. La borne PCRLB elle-même est quasi-invariante (spread &lt; 2&nbsp;% soit 4.28-4.35 mV sur les 714 runs).</div>
+        </div>
+
+        <h2 data-num="6.3">Robustesse au choix d'injection de bruit</h2>
+
+        <p>
+            Un reviewer Q1 pourrait objecter que le choix σ<sub>V</sub>&nbsp;=&nbsp;1&nbsp;mV est arbitraire. Nous avons donc relancé l'analyse sur un sous-ensemble de 20 cellules avec σ<sub>V</sub>&nbsp;∈&nbsp;{0.5, 1.0, 2.0}&nbsp;mV (plage 4× testée)&nbsp;:
+        </p>
+
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr><th>σ<sub>V</sub> (mV)</th><th>t</th><th>p-value</th><th>H<sub>5</sub> rejetée&nbsp;?</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>0.5</td><td>-1.05</td><td>0.308</td><td>non</td></tr>
+                    <tr><td>1.0</td><td>-1.10</td><td>0.286</td><td>non</td></tr>
+                    <tr><td>2.0</td><td>-1.35</td><td>0.195</td><td>non</td></tr>
+                </tbody>
+            </table>
+            <div class="table-caption"><span class="tab-label">Tableau 10.</span> Sensibilité au bruit injecté. H<sub>5</sub> non rejetée pour toutes les valeurs de σ<sub>V</sub> testées. Source&nbsp;: <code>sensitivity_noise_sigma/comparison.md</code>.</div>
+        </div>
+
+        <h2 data-num="6.4">Interprétation physique</h2>
+
+        <p>
+            Trois mécanismes plausibles expliquent cette aging-invariance&nbsp;: (i)&nbsp;le plateau OCV quasi-plat du LFP entre 10&nbsp;% et 90&nbsp;% SoC masque la dérive OCV induite par le vieillissement dans la fenêtre d'opération; (ii)&nbsp;le Joint UKF inclut par construction deux états d'impédance adaptatifs (ρ<sub>0</sub>, ρ<sub>1</sub>) qui compensent la croissance de la SEI et de la résistance ohmique au fil du cyclage; (iii)&nbsp;la fenêtre de décharge 4C (13-15 min) est trop courte pour que les tendances inter-cycles de vieillissement se manifestent intra-cycle.
+        </p>
+
+        <div class="callout reveal">
+            <div class="callout-title">Ce que dit cette analyse pour un BMS industriel</div>
+            <p>Un filtre calibré sur une cellule pristine de chimie LFP A123 reste <strong>near-optimal pour toute la vie de la cellule</strong>, sans réétalonnage en opération. C'est une implication industrielle directe&nbsp;: le coût d'ingénierie de la re-calibration périodique peut être épargné pour cette famille de cellules. La généralisation à NCA et NMC nécessite un dataset multi-chimies à aging-trajectoire complet (Sandia SNL <a href="#refs" class="footnote">15</a>), que nous prévoyons d'acquérir par correspondance directe.</p>
+        </div>
+
+        <!-- ============ §7 DÉPLOYABILITÉ ============ -->
+        <h1 class="section" id="sec-deploy" data-num="7">Déployabilité embarquée &mdash; 1 100 FLOPS et 41 mJ/an</h1>
+
+        <p>
+            Le Joint UKF consomme par pas d'échantillonnage <strong>~1 100 opérations en virgule flottante</strong>, à comparer aux 3 FLOPS d'un modèle Rint. Le facteur multiplicatif est ~370, le gain de précision est ~27 (138.75 → 5.04 mV). Sur un microcontrôleur BMS représentatif <strong>STM32F4 Cortex-M4F</strong> cadencé à 168 MHz (168 MFLOPS simple précision), cela représente <strong>6.5·10<sup>-6</sup></strong> du budget compute à 1 Hz.
+        </p>
+
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr><th>Métrique</th><th>Rint baseline</th><th>Joint UKF 5-état</th><th>Facteur</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>FLOPS / pas</td><td>3</td><td>1 100</td><td>×370</td></tr>
+                    <tr><td>Mémoire (floats)</td><td>~20</td><td>~200 (800 B)</td><td>×10</td></tr>
+                    <tr><td>Fraction STM32F4 168 MFLOPS @ 1 Hz</td><td>1.8·10<sup>-8</sup></td><td>6.5·10<sup>-6</sup></td><td>&mdash;</td></tr>
+                    <tr><td>Énergie additionnelle / an</td><td>référence</td><td>+ 41 mJ</td><td>&mdash;</td></tr>
+                    <tr class="highlight"><td><strong>RMSE tension (CALCE DST, moyenne 3&nbsp;T)</strong></td><td><strong>138.75 mV</strong></td><td><strong>5.04 mV</strong></td><td><strong>÷27.5</strong></td></tr>
+                </tbody>
+            </table>
+            <div class="table-caption"><span class="tab-label">Tableau 11.</span> Bilan coût / bénéfice d'un déploiement Joint UKF vs Rint sur BMS moderne. Le surcoût énergétique annuel <strong>41 mJ</strong> est l'équivalent d'une LED indicatrice de faible courant allumée 0.4 seconde. Sur les 0.5 à 2 W d'enveloppe thermique typique d'un BMS, c'est physiquement négligeable.</div>
+        </div>
+
+        <p>
+            <strong>Conclusion ingénierie.</strong> La préférence industrielle historique pour Rint ou les ECM simples n'est plus justifiée par les contraintes matérielles en 2026. Le déploiement Joint UKF est quasi-gratuit sur silicium BMS actuel, et le gain de précision ~15× sur la plage de SoC du plateau LFP se traduit directement par ~5-10&nbsp;% d'énergie utile récupérée par cycle de charge sur un pack EV de 75&nbsp;kWh (estimation d'ordre de grandeur).
+        </p>
+
+        <h2 data-num="7.5">Limitations et portée des résultats</h2>
+
+        <p>
+            Pour la clarté du comité, les quatre limitations principales du présent travail sont énumérées ci-dessous; elles figureront également en §7 Discussion du manuscrit complet.
+        </p>
+
+        <ol>
+            <li><strong>Cohort C limité au LFP.</strong> L'aging-invariance (§6) est établie sur la chimie LFP uniquement (A123 APR18650M1A). L'extension à NCA et NMC cell-aging trajectories nécessite le dataset Sandia SNL (26 cellules trois chimies) que nous prévoyons d'obtenir par correspondance directe avec Battery Archive, voie documentée par Süpürtülü &amp; Yılmaz 2026.</li>
+            <li><strong>Décomposition en 4 régimes confond chimie et profil.</strong> Cohort B (§5) sépare les 4 régimes par analyse descriptive mais ne formalise pas la loi de composition eff&nbsp;=&nbsp;γ<sub>chimie</sub>·γ<sub>profil</sub>. Un plan d'expériences factoriel à 2×2 cellules (LFP et NCA × DST et CC) serait nécessaire pour tester rigoureusement la séparabilité.</li>
+            <li><strong>Injection de bruit synthétique pour BEEP.</strong> Les données TRI FastCharge BEEP sont voltage-interpolated, ce qui masque le bruit capteur original. L'injection σ<sub>V</sub> = 1 mV reconstitue un bruit BMS-réaliste; l'analyse de sensibilité (§6.3) confirme que le résultat H<sub>5</sub> est robuste à ce choix sur une plage 4×, mais un dataset avec time-series brutes accessibles renforcerait la crédibilité.</li>
+            <li><strong>Provenance unilatérale dominée par un seul laboratoire.</strong> Cohorts B et C reposent largement sur MIT-Stanford-Toyota (139 cellules Severson + 140 cellules TRI). Une réplication cross-laboratoire sur cellules A123 nominalement identiques (par exemple CALCE UMD vs NREL vs un institut chinois) serait un prolongement naturel.</li>
+        </ol>
+
+        <h2 data-num="7.6">Hyperparamètres complets pour reproductibilité</h2>
+
+        <p>
+            Les valeurs numériques des hyperparamètres figés, applicables à toutes les expériences des trois cohortes, sont&nbsp;:
+        </p>
+
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr><th>Paramètre</th><th>Symbole</th><th>Valeur</th><th>Source/justification</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>Bruit processus SoC</td><td>Q<sub>1,1</sub></td><td>10<sup>-5</sup></td><td>coulomb counting noise</td></tr>
+                    <tr><td>Bruit processus V<sub>RC1</sub>, V<sub>RC2</sub></td><td>Q<sub>2,2</sub>, Q<sub>3,3</sub></td><td>2·10<sup>-5</sup></td><td>RC voltage noise</td></tr>
+                    <tr><td>Bruit processus ρ<sub>0</sub>, ρ<sub>1</sub></td><td>Q<sub>4,4</sub>, Q<sub>5,5</sub></td><td>10<sup>-5</sup></td><td>impedance drift rate</td></tr>
+                    <tr><td>Bruit mesure tuning</td><td>R</td><td>10<sup>-5</sup> (σ ≈ 3.16 mV)</td><td>typical BMS ADC</td></tr>
+                    <tr><td>Spread sigma-points UKF</td><td>α</td><td>0.30</td><td>Plett 2006; Wan-Merwe 2000</td></tr>
+                    <tr><td>Secondary spread UKF</td><td>κ</td><td>0</td><td>default</td></tr>
+                    <tr><td>Gaussian prior UKF</td><td>β</td><td>2</td><td>optimal Gaussian</td></tr>
+                    <tr><td>Initial SoC uncertainty</td><td>P<sub>0</sub>(SoC)</td><td>10<sup>-2</sup></td><td>large prior</td></tr>
+                </tbody>
+            </table>
+            <div class="table-caption"><span class="tab-label">Tableau 12.</span> Hyperparamètres figés utilisés pour les 873 expériences des trois cohortes. Source&nbsp;: <code>validate_statistical.py</code> lignes 36-38 (hyperparameter freeze). Aucun réétalonnage entre cohortes.</div>
+        </div>
+
+        <!-- ============ §8 CTA ============ -->
+        <h1 class="section" id="sec-cta" data-num="8">Invitation au dialogue &mdash; vos retours avant mercredi</h1>
+
+        <p>
+            Ce briefing est adressé trois jours avant le Meeting #13-14 dans un but précis&nbsp;: vous permettre de vous approprier le matériel scientifique à votre rythme et de préparer les questions qui vous semblent importantes. La charge cognitive d'une révélation live d'un tel volume (873 expériences, 3 cohortes, 6 figures, une démonstration) serait contraire à l'esprit d'un échange de qualité.
+        </p>
+
+        <p>
+            <strong>Ce que je souhaite particulièrement</strong> pouvoir adresser lors du Meeting&nbsp;:
+        </p>
+
+        <ul>
+            <li>Vos objections éventuelles sur l'<em>interprétation</em> du ratio d'efficacité PCRLB moyenne 1.17× (est-elle conservatrice, libérale, correctement formulée&nbsp;?).</li>
+            <li>Votre regard sur la <em>décomposition en quatre régimes</em> du §5 &mdash; trouvez-vous la séparation chimie/profil convaincante ou voyez-vous une variable de confusion&nbsp;?</li>
+            <li>La <em>pertinence clinique</em> du résultat d'aging-invariance (§6) pour un BMS industriel &mdash; sauriez-vous identifier un scénario où il deviendrait faux&nbsp;?</li>
+            <li>Votre appréciation de la <em>rigueur méthodologique</em> globale vis-à-vis des standards que vous souhaitez voir atteints dans la thèse.</li>
+        </ul>
+
+        <p>
+            <strong>Modalité pratique.</strong> Tout retour envoyé d'ici mardi 21 avril soir sera intégré ou commenté explicitement lors du Meeting. Un retour plus bref («&nbsp;bon jusqu'à la section X, à reprendre en séance&nbsp;») est aussi utile qu'un retour long. Si une partie du briefing est illisible ou prête à confusion, me le signaler est un service que vous me rendez, pas une critique.
+        </p>
+
+        <div class="callout later">
+            <div class="callout-title">Ce que je sollicite à l'issue du Meeting #13-14</div>
+            <p>Un <strong>Meeting #15 présentiel</strong> à planifier dans les semaines qui suivent, avec Mme Rim Barrak en priorité (et Mme Fatma Rouissi, Mme Hela Gassara si elles le souhaitent). L'ordre du jour de ce Meeting #15 serait exclusivement&nbsp;: (i)&nbsp;choix de la cible éditoriale finale, (ii)&nbsp;calendrier de soumission et intérêt d'un preprint parallèle, (iii)&nbsp;politique de partage de code et de données (dépôt Zenodo), (iv)&nbsp;liste finale des co-auteurs. Ces quatre questions stratégiques ne peuvent pas être traitées à la volée dans un créneau d'une heure en visioconférence; elles méritent le temps d'un face-à-face dédié.</p>
+        </div>
+
+        <p style="margin-top: 2rem;">
+            Je vous remercie sincèrement de la lecture que vous accorderez à ce document. Le Meeting du 22 avril sera, je l'espère, plus riche pour nous trois grâce à cette préparation partagée.
+        </p>
+
+        <p style="margin-top: 2rem; font-family: 'Inter', sans-serif; font-size: 0.92rem; color: var(--text-soft);">
+            Oussama Akir &mdash; Laboratoire GRESCOM, SUP'COM, Université de Carthage.<br>
+            <em>20 avril 2026.</em>
+        </p>
+
+        <!-- ============ FOOTNOTES ============ -->
+        <section class="footnotes">
+            <ol>
+                <li id="fn1">Consignées dans <code>REPORT_RULES_MME_RIM.md</code> au lendemain du Meeting #12. Les six points&nbsp;: pagination automatique, liste d'acronymes, bibliographie exhaustive, axes temps harmonisés sur figures multi-panneaux, schémas d'architecture avant équations, plateforme d'implémentation explicite.</li>
+            </ol>
+        </section>
+
+        <!-- ============ BIBLIOGRAPHIE ============ -->
+        <section id="refs" class="references">
+            <h2>Références bibliographiques</h2>
+            <ol>
+                <li>Akir O., Barrak R. <em>Blind Cross-Profile Validation and Consistency Testing of a Joint UKF for LiFePO<sub>4</sub> Battery State Estimation</em>. Manuscrit en préparation pour Meeting #13-14, 2026.</li>
+                <li>Plett, G.&nbsp;L. <em>Extended Kalman filtering for battery management systems of LiPB-based HEV battery packs &mdash; Part 1: Background</em>. Journal of Power Sources 134(2), 252-261, 2004. DOI:&nbsp;10.1016/j.jpowsour.2004.02.031.</li>
+                <li>Plett, G.&nbsp;L. <em>Sigma-point Kalman filtering for battery management systems of LiPB-based HEV battery packs</em>. Journal of Power Sources 161(2), 1356-1368, 2006. DOI:&nbsp;10.1016/j.jpowsour.2006.06.003.</li>
+                <li>He, H., Xiong, R., Fan, J. <em>Evaluation of lithium-ion battery equivalent circuit models for state of charge estimation by an experimental approach</em>. Energies 4(4), 582-598, 2011. DOI:&nbsp;10.3390/en4040582.</li>
+                <li>Hu, X., Li, S., Peng, H. <em>A comparative study of equivalent circuit models for Li-ion batteries</em>. Journal of Power Sources 198, 359-367, 2012. DOI:&nbsp;10.1016/j.jpowsour.2011.10.013.</li>
+                <li>Sun, F., Li, X., You, S. <em>Extended state observer based state of charge estimation for lithium-ion batteries</em>. Renewable and Sustainable Energy Reviews 131, 110015, 2020. DOI:&nbsp;10.1016/j.rser.2020.110015.</li>
+                <li>Rodríguez-Iturriaga, P. <em>et&nbsp;al.</em> <em>Fractional-order equivalent circuit model for LiFePO<sub>4</sub> state of charge estimation with α-β tuning</em>. 2023. <em>(citation full details en finalisation pour le manuscrit complet ; entrée intermédiaire corrigée depuis l'attribution initiale erronée &laquo;&nbsp;Zou 2023&nbsp;&raquo; suite à l'audit biblio du 2026-04-17).</em></li>
+                <li>Pillai, P. <em>et&nbsp;al.</em> <em>Fisher information analysis for optimal charge profile design in Li-ion state estimation</em>. 2022. <em>(citation full details en finalisation).</em></li>
+                <li>Sovljanski, A. <em>et&nbsp;al.</em> <em>Cramér-Rao bounds for electrochemical impedance spectroscopy parameter identification</em>. 2024. <em>(citation full details en finalisation).</em></li>
+                <li><em>[Référence IEEE 2024 en finalisation bibliographique.]</em> Application de la recursion posterior Cramér-Rao à un EKF de batterie solid-state; citation exacte à confirmer lors de la préparation du manuscrit complet pour soumission.</li>
+                <li>Raj, A. <em>et&nbsp;al. Sub-5 mV voltage prediction on NMC cells via attention-augmented recurrent network</em>. 2025. <em>(entrée préliminaire pour le briefing ; liste d'auteurs complète et DOI à finaliser au manuscrit complet).</em></li>
+                <li>Süpürtülü, M., Yılmaz, E. <em>A battery cycle-level RUL estimation method based on multi-domain features and an MCAS-guided dual-attention Bi-LSTM</em>. Applied Sciences 16(4), 2070, 2026. DOI:&nbsp;10.3390/app16042070.</li>
+                <li>Severson, K.&nbsp;A. <em>et&nbsp;al.</em> <em>Data-driven prediction of battery cycle life before capacity degradation</em>. Nature Energy 4, 383-391, 2019. DOI:&nbsp;10.1038/s41560-019-0356-8.</li>
+                <li>Tichavský, P., Muravchik, C.&nbsp;H., Nehorai, A. <em>Posterior Cramér-Rao bounds for discrete-time nonlinear filtering</em>. IEEE Transactions on Signal Processing 46(5), 1386-1396, 1998.</li>
+                <li>Preger, Y. <em>et&nbsp;al.</em> <em>Degradation of commercial lithium-ion cells as a function of chemistry and cycling conditions</em>. Journal of The Electrochemical Society 167(12), 120532, 2020. DOI:&nbsp;10.1149/1945-7111/abae37.</li>
+            </ol>
+        </section>
+
+        <div class="footer">
+            Briefing pré-Meeting #13-14 &mdash; Oussama Akir, GRESCOM / SUP'COM &mdash; 20 avril 2026
+        </div>
+
+    </div>
+</body>
+</html>

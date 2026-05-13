@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PrivIMU — Re-identification Risk in Anonymous Motion Sensor Traces</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"
+        onload="renderMathInElement(document.body, {delimiters: [{left: '$$', right: '$$', display: true}, {left: '$', right: '$', display: false}]});"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,wght@0,300..900;1,300..900&family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+        :root {
+            --text: #0a0a0a;
+            --text-soft: #3a3a3a;
+            --text-muted: #6a6a6a;
+            --accent: #1f4e8c;
+            --accent-soft: #6a8ab5;
+            --accent-warm: #b85c38;
+            --bg: #fdfcfa;
+            --bg-soft: #f5f3ef;
+            --border: #e0dcd4;
+            --border-soft: #edeae3;
+            --link: #173866;
+            --code-bg: #f5f3ef;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: 'Source Serif 4', Georgia, 'Times New Roman', serif;
+            font-size: 15.5px;
+            line-height: 1.55;
+            color: var(--text);
+            background: var(--bg);
+            font-weight: 400;
+            text-rendering: optimizeLegibility;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .page { max-width: 760px; margin: 0 auto; padding: 2.5rem 2.5rem 4rem; }
+
+        /* COVER */
+        .cover { padding-top: 1rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--border); margin-bottom: 1.5rem; }
+        .cover .eyebrow { font-family: 'Inter', sans-serif; font-size: 0.75rem; letter-spacing: 0.18em; text-transform: uppercase; color: var(--text-muted); font-weight: 600; margin-bottom: 1.4rem; }
+        .cover h1 { font-family: 'Source Serif 4', serif; font-size: 2rem; font-weight: 600; line-height: 1.15; letter-spacing: -0.01em; color: var(--text); margin-bottom: 0.4rem; }
+        .cover .subtitle { font-family: 'Source Serif 4', serif; font-size: 1.1rem; font-weight: 400; font-style: italic; color: var(--text-soft); margin-bottom: 1.4rem; line-height: 1.4; }
+        .cover .meta { font-family: 'Inter', sans-serif; font-size: 0.85rem; color: var(--text-muted); line-height: 1.85; }
+        .cover .meta strong { color: var(--text-soft); font-weight: 600; }
+        .cover .meta .date { margin-top: 0.85rem; font-size: 0.82rem; }
+
+        /* HEADINGS */
+        h1.section { font-family: 'Source Serif 4', serif; font-size: 1.55rem; font-weight: 600; margin-top: 2rem; margin-bottom: 0.7rem; line-height: 1.2; color: var(--text); }
+        h1.section::before { content: attr(data-num); display: inline-block; color: var(--accent); font-weight: 500; margin-right: 0.5em; }
+
+        h2 { font-family: 'Source Serif 4', serif; font-size: 1.18rem; font-weight: 600; margin-top: 1.4rem; margin-bottom: 0.5rem; line-height: 1.3; color: var(--text); }
+        h2::before { content: attr(data-num); display: inline-block; color: var(--accent); font-weight: 500; margin-right: 0.45em; }
+
+        h3 { font-family: 'Source Serif 4', serif; font-size: 1rem; font-weight: 600; font-style: italic; margin-top: 1rem; margin-bottom: 0.35rem; color: var(--text-soft); }
+        h3::before { content: attr(data-num); display: inline-block; color: var(--accent); font-weight: 500; font-style: normal; margin-right: 0.45em; }
+
+        /* PARAGRAPHS */
+        p { margin-bottom: 0.7rem; text-align: justify; hyphens: auto; }
+        p+h2, p+h3 { margin-top: 1.1rem; }
+        strong { font-weight: 700; color: var(--text); }
+        em { font-style: italic; }
+        a { color: var(--link); text-decoration: none; border-bottom: 1px solid var(--accent-soft); }
+        a:hover { color: var(--accent); border-bottom-color: var(--accent); }
+
+        /* LISTS */
+        ul, ol { margin: 0 0 1rem 1.5rem; line-height: 1.65; }
+        li { margin-bottom: 0.25rem; padding-left: 0.3rem; }
+        ul li::marker { color: var(--accent); }
+        ol li::marker { color: var(--accent); font-weight: 600; }
+
+        /* FIGURES */
+        figure { margin: 1.1rem 0 1.1rem; text-align: center; }
+        figure img { max-width: 100%; max-height: 280px; height: auto; object-fit: contain; border: 1px solid var(--border); border-radius: 2px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+        figcaption { margin-top: 0.5rem; padding: 0 0.3rem; font-family: 'Inter', sans-serif; font-size: 0.74rem; line-height: 1.5; color: var(--text-soft); text-align: left; }
+        figcaption .fig-label { color: var(--accent); font-weight: 700; }
+        .fig-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; align-items: start; margin: 1.1rem 0; }
+        .fig-row figure { margin: 0; }
+        .fig-row figure img { max-height: 200px; }
+
+        /* TABLES */
+        .table-wrapper { margin: 1.7rem 0; overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; font-family: 'Inter', sans-serif; font-size: 0.84rem; line-height: 1.5; }
+        th, td { padding: 0.55rem 0.8rem; text-align: left; border-bottom: 1px solid var(--border); }
+        thead th { border-bottom: 2px solid var(--text); border-top: 2px solid var(--text); font-weight: 700; color: var(--text); background: var(--bg-soft); }
+        tbody tr:hover { background: var(--bg-soft); }
+        tbody tr.highlight td { background: rgba(31, 78, 140, 0.07); font-weight: 600; }
+        td.num { font-family: 'JetBrains Mono', monospace; text-align: right; }
+        .table-caption { font-family: 'Inter', sans-serif; font-size: 0.78rem; color: var(--text-soft); margin-top: 0.65rem; text-align: left; line-height: 1.55; }
+        .table-caption .tab-label { color: var(--accent); font-weight: 700; }
+
+        /* CODE */
+        code { font-family: 'JetBrains Mono', monospace; font-size: 0.85em; background: var(--code-bg); padding: 0.1em 0.35em; border-radius: 3px; color: var(--text); }
+        pre { font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; line-height: 1.5; background: var(--bg-soft); border-left: 3px solid var(--accent); padding: 0.75rem 1rem; margin: 1.1rem 0; overflow-x: auto; color: var(--text-soft); white-space: pre-wrap; }
+        pre code { background: none; padding: 0; font-size: 1em; }
+
+        /* CALLOUTS */
+        .callout { margin: 1.3rem 0; padding: 0.95rem 1.2rem; background: var(--bg-soft); border-left: 3px solid var(--accent); font-size: 0.93rem; line-height: 1.55; }
+        .callout p:last-child { margin-bottom: 0; }
+        .callout .callout-title { font-family: 'Inter', sans-serif; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.12em; color: var(--accent); font-weight: 700; margin-bottom: 0.45rem; }
+        .callout.warn { border-left-color: var(--accent-warm); background: #fdf6f1; }
+        .callout.warn .callout-title { color: var(--accent-warm); }
+        .callout.later { border-left-color: var(--text-muted); background: #f3f3f0; }
+        .callout.later .callout-title { color: var(--text-muted); }
+
+        /* TOC */
+        .toc { margin: 1.2rem 0 1.8rem; padding: 1rem 1.4rem; background: var(--bg-soft); border: 1px solid var(--border); border-radius: 2px; }
+        .toc h2 { margin-top: 0; font-size: 0.95rem; text-transform: uppercase; letter-spacing: 0.15em; font-family: 'Inter', sans-serif; color: var(--text-muted); font-weight: 700; border: none; font-style: normal; }
+        .toc h2::before { content: none; }
+        .toc ol { margin: 1rem 0 0 0; list-style: none; counter-reset: toc; }
+        .toc li { counter-increment: toc; font-family: 'Inter', sans-serif; font-size: 0.92rem; line-height: 1.6; display: flex; gap: 0.7rem; color: var(--text-soft); padding: 0; margin-bottom: 0; }
+        .toc li::before { content: counter(toc, decimal) "."; color: var(--accent); font-weight: 600; min-width: 1.4rem; }
+        .toc li::marker { content: none; }
+        .toc li a { color: inherit; border: none; }
+        .toc li a:hover { color: var(--accent); }
+
+        /* KPI BAR */
+        .kpi-bar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.4rem; margin: 1.1rem 0 1.6rem; }
+        .kpi { background: var(--bg-soft); border: 1px solid var(--border); border-radius: 3px; padding: 0.7rem 0.6rem; text-align: center; }
+        .kpi-value { font-family: 'Source Serif 4', serif; font-size: 1.4rem; font-weight: 700; color: var(--accent); line-height: 1.05; }
+        .kpi-unit { font-family: 'Inter', sans-serif; font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text-muted); margin-top: 0.22rem; }
+        .kpi-label { font-family: 'Inter', sans-serif; font-size: 0.7rem; color: var(--text-soft); margin-top: 0.3rem; line-height: 1.3; }
+
+        /* EQUATIONS */
+        .equation { margin: 1.2rem 0; padding: 0.6rem; text-align: center; font-size: 1.05rem; background: var(--bg-soft); border: 1px solid var(--border); border-radius: 3px; overflow-x: auto; }
+
+        /* ACRONYMS */
+        .acronyms { margin: 0.8rem 0 1rem; padding: 0.7rem 1rem; background: var(--bg-soft); border: 1px solid var(--border); border-radius: 2px; }
+        .acronyms h2 { margin-top: 0; font-size: 0.74rem; text-transform: uppercase; letter-spacing: 0.15em; font-family: 'Inter', sans-serif; color: var(--text-muted); font-weight: 700; border: none; font-style: normal; }
+        .acronyms h2::before { content: none; }
+        .acronyms dl { margin: 0.55rem 0 0 0; display: grid; grid-template-columns: minmax(70px, auto) 1fr minmax(70px, auto) 1fr; gap: 0.18rem 0.7rem; font-family: 'Inter', sans-serif; font-size: 0.72rem; line-height: 1.45; }
+        .acronyms dt { font-weight: 700; color: var(--accent); font-family: 'JetBrains Mono', monospace; font-size: 0.7rem; }
+        .acronyms dd { margin: 0; color: var(--text-soft); }
+
+        /* REFERENCES */
+        .references { margin-top: 3.5rem; padding-top: 1.5rem; border-top: 2px solid var(--text); }
+        .references h2 { margin-top: 0; font-size: 1.2rem; color: var(--text); border: none; font-style: normal; }
+        .references h2::before { content: none; }
+        .references ol { counter-reset: ref; list-style: none; margin-left: 0; padding-left: 0; }
+        .references li { counter-increment: ref; padding-left: 2.4rem; position: relative; margin-bottom: 0.85rem; font-family: 'Inter', sans-serif; font-size: 0.8rem; line-height: 1.55; color: var(--text-soft); }
+        .references li::before { content: "[" counter(ref) "]"; position: absolute; left: 0; color: var(--accent); font-weight: 700; }
+
+        /* FOOTER */
+        .footer { margin-top: 4rem; padding-top: 1.2rem; border-top: 1px solid var(--border); font-family: 'Inter', sans-serif; font-size: 0.72rem; color: var(--text-muted); text-align: center; letter-spacing: 0.04em; }
+
+        /* PRINT */
+        @media print {
+            body { background: white; font-size: 11pt; }
+            .page { max-width: 100%; padding: 0 1.5cm; }
+            h1.section, h2, h3 { break-after: avoid; page-break-after: avoid; }
+            figure, table, pre, .callout, .equation, .kpi-bar { break-inside: avoid; page-break-inside: avoid; }
+            a { color: var(--text); }
+            .cover { padding-top: 0; padding-bottom: 0.8rem; }
+            .cover h1 { font-size: 20pt; }
+            section#abstract { page-break-before: avoid; }
+            nav.toc { page-break-inside: avoid; break-inside: avoid; }
+            section.references li { break-inside: avoid; page-break-inside: avoid; }
+            .acronyms dt, .acronyms dd, .acronyms dl > * { break-inside: avoid; page-break-inside: avoid; }
+            table { font-size: 9.5pt; }
+            pre { font-size: 8.5pt; }
+
+            @page {
+                size: A4;
+                margin: 1.5cm 1.5cm 1.7cm 1.5cm;
+                @bottom-center {
+                    content: counter(page) " / " counter(pages);
+                    font-family: 'Inter', sans-serif;
+                    font-size: 9pt;
+                    color: #6a6a6a;
+                }
+            }
+            @page :first { @bottom-center { content: none; } }
+        }
+    </style>
+</head>
+
+<body>
+<div class="page">
+
+    <!-- ============ COVER ============ -->
+    <header class="cover">
+        <div class="eyebrow">Technical Report &mdash; FF6 IoT, Cloud &amp; Big Data &mdash; SUP'COM 2026</div>
+        <h1>PrivIMU &mdash; Re-identification Risk in Anonymous Motion Sensor Traces</h1>
+        <div class="subtitle">A reproducible IoT privacy study on the MotionSense dataset, with attack metrics, defence
+            sweep and a Streamlit lab.</div>
+        <div class="meta">
+            <strong>Group of 5</strong> &mdash; Doctoral Training Programme, FF6 IoT module<br>
+            Lecturer : <strong>Mr. Mohamed Ould-Elhassen Aoueileyine</strong> &mdash; SUP'COM, University of Carthage<br>
+            <strong>Repository</strong> : <a href="https://github.com/akiroussama/PrivIMU">github.com/akiroussama/PrivIMU</a>
+            &middot; <strong>Notebook</strong> : Google Colab &middot; <strong>Demo</strong> : Streamlit (see &sect;7)
+            <div class="date"><strong>Version 1.0</strong> &mdash; 2026-05-13</div>
+        </div>
+    </header>
+
+    <!-- ============ ABSTRACT ============ -->
+    <section id="abstract">
+        <h2 style="margin-top: 0;" data-num="">Abstract</h2>
+        <p>Motion data are routinely collected by smartphones, wearables and connected devices through accelerometer
+            and gyroscope sensors. Because they carry no name, photo or e-mail, they are often perceived as <em>low-risk
+            telemetry</em> and shared with third-party services with little gatekeeping. <strong>PrivIMU</strong>
+            challenges that assumption by asking whether such anonymous-looking traces still carry enough behavioural
+            signature to <strong>re-identify</strong> a user from a known candidate set.</p>
+        <p>We build an end-to-end reproducible pipeline on the public MotionSense corpus (24 subjects, 6 activities,
+            iPhone DeviceMotion at 50&nbsp;Hz) and train a Random Forest classifier on 60 hand-crafted features per
+            1-second window. With a <strong>5-fold GroupKFold</strong> evaluation grouped by activity-trial &mdash; a
+            split that prevents within-trial leakage between train and test &mdash; the classifier reaches
+            <strong>top-1 accuracy 39.06&nbsp;%</strong> and <strong>top-3 accuracy 52.80&nbsp;%</strong>, against a
+            random baseline of 4.17&nbsp;% (<em>9.4&times; lift</em>). The mean posterior entropy leakage is
+            $\Delta H = \log_{2}(24) - H(p) \approx 0.700$ bit, and per-window inference takes
+            $\approx 42$&nbsp;ms on a CPU.</p>
+        <p>To make the result tangible, we ship a <strong>Streamlit privacy lab</strong> that ranks top-3 candidate
+            identities for any uploaded CSV, runs a Gaussian-noise defence sweep, and exports an evidence card
+            (JSON&nbsp;+&nbsp;Markdown). All numerical claims in this report are generated by code into
+            <code>reports/metrics.json</code>, which is the single source of truth for the slides and the demo.</p>
+        <p style="font-size: 0.9rem; font-style: italic; color: var(--text-muted);">
+            <strong>Scope note.</strong> The 39&nbsp;% top-1 figure is not a real-world identification system : it is
+            a <em>proof that the signal carries identity</em> on a controlled 24-subject closed-set benchmark. Under
+            larger populations, deeper models or device-fingerprint cross-correlation, the number can only grow.
+            The right reaction is to treat motion data as personal data &mdash; not to wait for the attack at scale.
+        </p>
+    </section>
+
+    <!-- Acronyms (inline) -->
+    <section class="acronyms">
+        <h2>Acronyms</h2>
+        <dl>
+            <dt>HAR</dt><dd>Human Activity Recognition</dd>
+            <dt>IMU</dt><dd>Inertial Measurement Unit</dd>
+            <dt>IoT</dt><dd>Internet of Things</dd>
+            <dt>RF</dt><dd>Random Forest</dd>
+            <dt>OOF</dt><dd>Out-Of-Fold (predictions)</dd>
+            <dt>PII</dt><dd>Personally Identifiable Information</dd>
+            <dt>DP</dt><dd>Differential Privacy</dd>
+            <dt>FL</dt><dd>Federated Learning</dd>
+            <dt>$\Delta H$</dt><dd>Leakage : $\log_{2}(K) - H(\mathbf{p})$ in bits</dd>
+            <dt>$H(\mathbf{p})$</dt><dd>Shannon entropy of posterior $\mathbf{p}$</dd>
+        </dl>
+    </section>
+
+    <!-- ============ KPI BAR ============ -->
+    <div class="kpi-bar">
+        <div class="kpi">
+            <div class="kpi-value">39.06</div>
+            <div class="kpi-unit">% top-1</div>
+            <div class="kpi-label">vs 4.17&nbsp;% random &mdash; 9.4&times; lift</div>
+        </div>
+        <div class="kpi">
+            <div class="kpi-value">52.80</div>
+            <div class="kpi-unit">% top-3</div>
+            <div class="kpi-label">true subject in top 3 candidates</div>
+        </div>
+        <div class="kpi">
+            <div class="kpi-value">0.700</div>
+            <div class="kpi-unit">$\Delta H$ bits</div>
+            <div class="kpi-label">mean posterior leakage per window</div>
+        </div>
+        <div class="kpi">
+            <div class="kpi-value">42.0</div>
+            <div class="kpi-unit">ms / window</div>
+            <div class="kpi-label">CPU inference latency, RF&nbsp;200&nbsp;trees</div>
+        </div>
+    </div>
+
+    <!-- ============ §1 INTRODUCTION ============ -->
+    <h1 class="section" id="sec-intro" data-num="1.">Introduction and motivation</h1>
+    <p>The Internet of Things has normalised the continuous capture of inertial signals. Every smartphone exposes
+        accelerometer and gyroscope streams through the platform DeviceMotion API ; smartwatches and fitness bands
+        sample the same channels at 50&ndash;200&nbsp;Hz around the clock ; connected vehicles, e-scooters, AR/VR
+        headsets and rehabilitation devices forward similar telemetry to back-end services. By default, this data
+        is treated as <em>"low-risk"</em> &mdash; it carries no face, no voice, no name &mdash; and is shared across
+        analytics SDKs with little gatekeeping.</p>
+    <p>This report studies whether that assumption holds. The scientific question is concise :</p>
+    <div class="callout">
+        <div class="callout-title">Research question</div>
+        <p>Can a supervised classifier trained on accelerometer + gyroscope windows <strong>re-identify a user</strong>
+            among a closed candidate set, when the input contains no direct identifier&nbsp;?</p>
+    </div>
+    <p>The hypothesis is that 1-second windows of six IMU channels carry enough <strong>behavioural signature</strong>
+        &mdash; gait, posture micro-tremor, hand dynamics &mdash; to act as a quasi-identifier even after stripping
+        every explicit identity field. The contributions of this work are :</p>
+    <ol>
+        <li><strong>C1 &mdash; Reproducible pipeline.</strong> An end-to-end Python package
+            (<code>privimu.{data,features,model_rf,train,evaluate}</code>) covering dataset ingestion,
+            windowing, feature extraction, training and reporting, with 8 unit tests and a CI workflow.</li>
+        <li><strong>C2 &mdash; Honest measurement.</strong> Top-1 / top-3 accuracy, macro-F1, per-subject F1, posterior
+            entropy and entropy leakage, all generated into <code>reports/metrics.json</code> with a <strong>group-aware
+            cross-validation</strong> that explicitly forbids within-trial leakage between train and test.</li>
+        <li><strong>C3 &mdash; Interactive privacy lab.</strong> A Streamlit application that, given any
+            MotionSense-like CSV, ranks the most likely subjects, plots an identity-lock replay, runs a
+            Gaussian-noise defence sweep and exports a downloadable evidence card.</li>
+        <li><strong>C4 &mdash; Privacy-by-design discussion.</strong> A practical mapping from the measured leakage to
+            the defence stack &mdash; data minimisation, on-device inference, federated learning, differential privacy
+            &mdash; plus an explicit ethical scope and a list of limits.</li>
+    </ol>
+
+    <!-- ============ §2 RELATED WORK ============ -->
+    <h1 class="section" id="sec-related" data-num="2.">Background and related work</h1>
+    <p>Three research lines intersect at PrivIMU : human activity recognition (HAR), behavioural biometrics and sensor
+        privacy leakage.</p>
+
+    <h3 data-num="2.1">Human activity recognition with IMU</h3>
+    <p>HAR studies use the same IMU channels as PrivIMU, but the prediction target is the <em>activity</em> rather
+        than the <em>subject</em>. The benchmarks of Anguita <em>et al.</em>&nbsp;[1] (UCI HAR) and Malekzadeh
+        <em>et al.</em>&nbsp;[2] (MotionSense) demonstrated that simple feature pipelines and shallow classifiers reach
+        90&nbsp;%+ accuracy at recognising six daily activities. PrivIMU re-uses that feature engineering recipe but
+        re-targets the label space.</p>
+
+    <h3 data-num="2.2">Gait and behavioural biometrics</h3>
+    <p>Gait recognition is a long-standing biometric problem ; surveys by Gafurov&nbsp;[3] and Hadid <em>et al.</em>&nbsp;[4]
+        document a body of work from floor sensors, vision and dedicated motion units. Smartphone-based gait
+        biometrics&nbsp;[5,&nbsp;6] showed that accelerometer-only or accelerometer+gyroscope identification is
+        feasible with cooperative protocols (controlled walking, fixed device placement). PrivIMU departs from these
+        works by treating identification as a <em>privacy threat</em> rather than an <em>authentication tool</em>.</p>
+
+    <h3 data-num="2.3">Sensor privacy leakage</h3>
+    <p>A separate line of work shows that motion sensors, when accessed silently, leak more than expected : Mehrnezhad
+        <em>et al.</em>&nbsp;[7] inferred touch input from web-page motion events ; Das <em>et al.</em>&nbsp;[8]
+        fingerprinted smartphones via accelerometer manufacturing imperfections. PrivIMU sits between the HAR
+        literature and these leakage studies : same dataset family as HAR, same threat-model spirit as leakage.</p>
+
+    <h3 data-num="2.4">Defences in the literature</h3>
+    <p>The mitigation toolbox combines <strong>data minimisation</strong> (lower sample rate, drop channels),
+        <strong>on-device computation</strong> (avoid sending raw windows), <strong>federated learning</strong>&nbsp;[9]
+        (train without centralising raw traces), <strong>differential privacy</strong>&nbsp;[10] (calibrated noise on
+        aggregates) and feature-level sharing (release coarse statistics rather than samples). PrivIMU prototypes the
+        simplest one &mdash; additive Gaussian noise on raw signals &mdash; as a pedagogical baseline and discusses
+        the rest in &sect;8.</p>
+
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr><th>Work</th><th>Sensors</th><th>Task</th><th>Subjects</th><th>Privacy framing</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Anguita 2013 [1]</td><td>Accel + Gyro</td><td>Activity (HAR)</td><td>30</td><td>None</td></tr>
+                <tr><td>Malekzadeh 2018 [2]</td><td>Accel + Gyro (MotionSense)</td><td>Activity / privacy filter</td><td>24</td><td>Sensitive-attribute hiding</td></tr>
+                <tr><td>Derawi 2010 [5]</td><td>Accel</td><td>Identification (gait)</td><td>51</td><td>None (auth)</td></tr>
+                <tr><td>Mehrnezhad 2018 [7]</td><td>Web motion API</td><td>Touch inference</td><td>Web users</td><td>Side channel</td></tr>
+                <tr><td>Das 2016 [8]</td><td>Accel</td><td>Device fingerprint</td><td>107 phones</td><td>Tracking</td></tr>
+                <tr class="highlight"><td><strong>PrivIMU (this work)</strong></td><td>Accel + Gyro (MotionSense)</td><td>Re-identification</td><td>24</td><td>Privacy-by-design lab</td></tr>
+            </tbody>
+        </table>
+        <div class="table-caption"><span class="tab-label">Tab. 1 &mdash;</span> Selected positioning of PrivIMU. The
+            originality is the explicit <em>privacy threat</em> framing of an HAR-style pipeline, paired with an
+            interactive defence demonstrator.</div>
+    </div>
+
+    <!-- ============ §3 DATASET ============ -->
+    <h1 class="section" id="sec-dataset" data-num="3.">Dataset and preprocessing</h1>
+    <p>We use the public <strong>MotionSense</strong> dataset of Malekzadeh <em>et al.</em>&nbsp;[2]. It contains 24
+        subjects performing six activities (walking, jogging, upstairs, downstairs, sitting, standing) while carrying
+        an iPhone&nbsp;6s in the front pocket. The DeviceMotion API exposes the high-level signals
+        <code>attitude.{roll,pitch,yaw}</code>, <code>gravity.{x,y,z}</code>, <code>rotationRate.{x,y,z}</code> and
+        <code>userAcceleration.{x,y,z}</code> at $\approx 50$&nbsp;Hz. PrivIMU keeps the six rotation-rate and
+        user-acceleration channels &mdash; the gravity-corrected motion components &mdash; and ignores the
+        <code>attitude</code> Euler angles, which encode an absolute orientation that varies with phone placement.</p>
+
+    <div class="table-wrapper">
+        <table>
+            <thead><tr><th>Property</th><th>Value</th></tr></thead>
+            <tbody>
+                <tr><td>Dataset</td><td>MotionSense (DeviceMotion subset)</td></tr>
+                <tr><td>Subjects $K$</td><td class="num">24</td></tr>
+                <tr><td>Activities</td><td><code>wlk</code>, <code>jog</code>, <code>ups</code>, <code>dws</code>, <code>sit</code>, <code>std</code></td></tr>
+                <tr><td>Sampling rate</td><td class="num">~50 Hz</td></tr>
+                <tr><td>IMU channels used</td><td>6 (rotationRate.{x,y,z} + userAcceleration.{x,y,z})</td></tr>
+                <tr><td>Window length</td><td class="num">1 s = 50 samples</td></tr>
+                <tr><td>Window step</td><td class="num">25 samples (50&nbsp;% overlap)</td></tr>
+                <tr><td>Total windows</td><td class="num">55 982</td></tr>
+                <tr><td>Activity-trial groups</td><td class="num">15</td></tr>
+                <tr><td>Per-window normalisation</td><td>z-score (mean 0, std 1) per channel</td></tr>
+            </tbody>
+        </table>
+        <div class="table-caption"><span class="tab-label">Tab. 2 &mdash;</span> Dataset and preprocessing parameters
+            used in this study, as recorded in <code>reports/metrics.json</code>.</div>
+    </div>
+
+    <p>The pipeline (<code>privimu.data</code>) walks the <code>A_DeviceMotion_data/</code> directory, parses each
+        <code>activity_id/sub_K.csv</code>, applies the windowing of Tab.&nbsp;2 and yields a feature matrix
+        $X \in \mathbb{R}^{55\,982 \times 60}$ together with subject labels $y \in \{1,\ldots,24\}$ and
+        group identifiers <code>activity_trial</code> used by the cross-validation in &sect;4.</p>
+
+    <!-- ============ §4 METHOD ============ -->
+    <h1 class="section" id="sec-method" data-num="4.">Methodology</h1>
+
+    <h3 data-num="4.1">Feature extraction</h3>
+    <p>For each window of 50 samples and each of the six channels, we compute ten statistics : mean, standard
+        deviation, root-mean-square, minimum, maximum, median, inter-quartile range, skewness, kurtosis and a spectral
+        entropy descriptor over the window's discrete-Fourier magnitude. This yields
+        $10 \times 6 = 60$ features per window. The choice mirrors the canonical HAR feature
+        pipeline of [1,&nbsp;2] but is re-tasked to identification rather than activity classification.</p>
+
+    <h3 data-num="4.2">Model</h3>
+    <p>The primary classifier is a <strong>Random Forest</strong> with 200 trees (scikit-learn defaults otherwise),
+        chosen for its strong baseline behaviour on tabular biometric features, its built-in calibration of probability
+        outputs needed for entropy computation, and its CPU-friendly inference. A 1D-CNN extension exists
+        (<code>privimu.model_cnn</code>) but is not the focus of the headline results in &sect;6.</p>
+
+    <h3 data-num="4.3">Cross-validation strategy</h3>
+    <p>Random K-fold over individual windows would split a single trial across train and test and produce inflated
+        accuracy. Instead we use a <strong>5-fold GroupKFold</strong> with the group key set to <code>activity_trial</code> :
+        each fold holds out a subset of trials, the model is trained on the remaining trials, and predictions are
+        recorded as out-of-fold posteriors over the full $55\,982$ windows. This is the protocol that makes the
+        39&nbsp;% top-1 number an honest measurement.</p>
+
+    <h3 data-num="4.4">Metrics</h3>
+    <p>We report : top-1 and top-3 accuracy, macro-averaged F1, per-subject F1 (Fig.&nbsp;3), the
+        $24 \times 24$ confusion matrix (Fig.&nbsp;1), per-window inference latency, and the privacy entropy leakage</p>
+
+    <div class="equation">$$\Delta H \;=\; \log_{2}(K) \;-\; H(\mathbf{p}) \;=\; \log_{2}(24) \;-\; \big(-\sum_{k=1}^{24} p_k \log_{2} p_k\big),$$</div>
+
+    <p>where $\mathbf{p} = (p_1, \ldots, p_{24})$ is the posterior produced by the Random Forest for a given window.
+        $\Delta H$ is in bits ; it equals 0 when the posterior is uniform (no information beyond the prior) and
+        $\log_{2}(24) \approx 4.585$ when the model is fully confident on a single subject.</p>
+
+    <!-- ============ §5 IMPLEMENTATION ============ -->
+    <h1 class="section" id="sec-impl" data-num="5.">Implementation and reproducibility</h1>
+    <p>The full project is open source at <a href="https://github.com/akiroussama/PrivIMU">github.com/akiroussama/PrivIMU</a>.
+        The package layout is :</p>
+    <pre>src/privimu/
+    config.py         # subject ids, default channels
+    data.py           # CSV walking, dataset assembly, group keys
+    features.py       # 10 stats × 6 channels = 60 features
+    model_rf.py       # Random Forest training + persistence
+    model_cnn.py      # optional 1D-CNN (extension)
+    metrics.py        # entropy, leakage, top-k accuracy, latency
+    train.py          # CLI : train + cross-validate + write metrics.json
+    evaluate.py       # pretty-prints metrics.json
+    viz.py            # confusion matrix, per-subject F1, entropy curve
+streamlit_app.py      # interactive privacy lab (§7)
+notebooks/PrivIMU_MotionSense_Demo.ipynb
+tests/                # 8 pytest unit tests
+</pre>
+
+    <p>Reproducing the headline result of &sect;6 from a clean clone takes four commands :</p>
+    <pre><code>$ python -m pip install -e ".[dev,app]"
+$ python data/download.py --dest data/raw/motionsense
+$ python -m privimu.train --data-root data/raw/motionsense \
+    --model rf --n-splits 5 --n-estimators 200
+$ streamlit run streamlit_app.py
+</code></pre>
+
+    <div class="callout">
+        <div class="callout-title">Source-of-truth rule</div>
+        <p>Every numerical claim in this report and in the accompanying slides is read from
+            <code>reports/metrics.json</code>, the file written by <code>privimu.train</code>. If a value is not in
+            that file, it is not in the report.</p>
+    </div>
+
+    <!-- ============ §6 RESULTS ============ -->
+    <h1 class="section" id="sec-results" data-num="6.">Results</h1>
+    <p>The Random Forest reaches <strong>top-1 accuracy 39.06&nbsp;%</strong> and <strong>top-3 accuracy
+        52.80&nbsp;%</strong> on the held-out windows of the 5-fold GroupKFold, against a uniform random baseline of
+        $1/24 \approx 4.17\,\%$ &mdash; a <strong>9.4&times; lift</strong> on top-1. Macro-F1 is 0.391 ; mean posterior
+        entropy leakage is $\Delta H = 0.700$&nbsp;bit per window ; per-window inference latency is 42.0&nbsp;ms on a
+        single CPU. Tab.&nbsp;3 lists the full configuration and Tab.&nbsp;4 the headline metrics.</p>
+
+    <div class="table-wrapper">
+        <table>
+            <thead><tr><th>Item</th><th>Value</th></tr></thead>
+            <tbody>
+                <tr><td>Model</td><td>Random Forest, 200 trees</td></tr>
+                <tr><td>Cross-validation</td><td>5-fold GroupKFold</td></tr>
+                <tr><td>Group key</td><td><code>activity_trial</code> (15 unique groups)</td></tr>
+                <tr><td>Out-of-fold windows evaluated</td><td class="num">55 982</td></tr>
+                <tr><td>Features per window</td><td class="num">60</td></tr>
+                <tr><td>Subjects</td><td class="num">24</td></tr>
+                <tr><td>Random baseline</td><td class="num">4.17&nbsp;% (1 / 24)</td></tr>
+                <tr><td>Generated</td><td>2026-05-13, <code>reports/metrics.json</code></td></tr>
+            </tbody>
+        </table>
+        <div class="table-caption"><span class="tab-label">Tab. 3 &mdash;</span> Run configuration of the headline
+            experiment.</div>
+    </div>
+
+    <div class="table-wrapper">
+        <table>
+            <thead><tr><th>Metric</th><th>Value</th><th>Reference</th></tr></thead>
+            <tbody>
+                <tr class="highlight"><td>Top-1 accuracy</td><td class="num">39.06&nbsp;%</td><td>random : 4.17&nbsp;%</td></tr>
+                <tr class="highlight"><td>Top-3 accuracy</td><td class="num">52.80&nbsp;%</td><td>random : 12.50&nbsp;%</td></tr>
+                <tr><td>Macro-F1</td><td class="num">0.391</td><td>balanced across 24 subjects</td></tr>
+                <tr><td>Posterior entropy $H(\mathbf{p})$ (mean)</td><td class="num">3.885 bit</td><td>max : $\log_{2}(24) \approx 4.585$</td></tr>
+                <tr><td>Privacy leakage $\Delta H$ (mean)</td><td class="num">0.700 bit</td><td>0 = no leak, 4.585 = full</td></tr>
+                <tr><td>Latency per window</td><td class="num">42.0 ms</td><td>CPU, RF.predict_proba</td></tr>
+                <tr><td>Model size on disk</td><td class="num">1 893 MB</td><td>200-tree RF, joblib dump</td></tr>
+            </tbody>
+        </table>
+        <div class="table-caption"><span class="tab-label">Tab. 4 &mdash;</span> Headline metrics. All values read from
+            <code>reports/metrics.json</code>.</div>
+    </div>
+
+    <figure>
+        <img src="../reports/confusion_matrix.png" alt="Confusion matrix"/>
+        <figcaption><span class="fig-label">Fig. 1 &mdash;</span> $24 \times 24$ confusion matrix on the 55&nbsp;982
+            out-of-fold windows. The strong yellow-to-green diagonal &mdash; especially around subjects 1, 2, 10, 12, 16,
+            18, 19, 22 &mdash; is the visual proof that the model concentrates probability mass on the correct subject.
+            Off-diagonal noise reveals residual confusion between behaviourally close users.</figcaption>
+    </figure>
+
+    <div class="fig-row">
+        <figure>
+            <img src="../reports/privacy_entropy_curve.png" alt="Privacy entropy profile"/>
+            <figcaption><span class="fig-label">Fig. 2 &mdash;</span> Privacy entropy profile over the 55&nbsp;982
+                windows sorted by leakage. The right tail captures the $\sim 5\,\%$ of windows whose posterior
+                collapses on a single subject &mdash; the dominant driver of identification risk.</figcaption>
+        </figure>
+        <figure>
+            <img src="../reports/per_subject_f1.png" alt="Per-subject F1"/>
+            <figcaption><span class="fig-label">Fig. 3 &mdash;</span> Per-subject F1. Identifiability is not uniform :
+                $\text{F1} \approx 0.51$ for the most identifiable subject (22), $\text{F1} \approx 0.15$ for the least
+                (14). Some users are intrinsically more exposed.</figcaption>
+        </figure>
+    </div>
+
+    <!-- ============ §7 LAB ============ -->
+    <h1 class="section" id="sec-lab" data-num="7.">Interactive privacy lab</h1>
+    <p>To make the result tangible &mdash; and to give the audience something to inspect rather than read &mdash; we
+        ship a Streamlit application (<code>streamlit_app.py</code>) that wraps the trained model in a six-stage
+        interactive flow :</p>
+    <ol>
+        <li><strong>Source.</strong> The user picks one of the <code>examples/wlk_7/sub_*.csv</code> traces shipped in
+            the repository or uploads their own MotionSense-like CSV.</li>
+        <li><strong>Signal plot.</strong> Plotly traces of the six IMU channels.</li>
+        <li><strong>Top-3 ranking.</strong> Window-aggregated posterior over the 24 enrolled subjects, presented as
+            a ranked bar chart with confidence values.</li>
+        <li><strong>Identity-lock replay.</strong> Window-by-window posterior, with a confidence curve and a
+            "lock-time" marker indicating when the top-1 hypothesis stabilises.</li>
+        <li><strong>Defence sweep.</strong> A slider for the noise standard deviation $\sigma$ (relative to the signal
+            standard deviation) injects Gaussian noise on the raw channels before feature extraction. The app plots
+            the trade-off between top-1 confidence, normalised leakage and a signal-preservation proxy.</li>
+        <li><strong>Evidence card.</strong> One-click export of a JSON + Markdown bundle (source CSV, top-3,
+            $\Delta H$, $\sigma$, identity-lock window, timestamp) for inclusion in a security review.</li>
+    </ol>
+    <p>The application can run without the trained model in a degraded UI-only mode, useful for design reviews. That
+        mode is clearly marked and is never used for the numerical claims in this report.</p>
+
+    <!-- ============ §8 DISCUSSION ============ -->
+    <h1 class="section" id="sec-discussion" data-num="8.">Discussion &mdash; risks, limitations and mitigations</h1>
+
+    <h3 data-num="8.1">What 39&nbsp;% top-1 actually means</h3>
+    <p>A 39&nbsp;% top-1 accuracy on 24 subjects with an off-the-shelf Random Forest is not a real-world identification
+        system. It is, however, sufficient to establish two facts. First, the inertial signal carries a behavioural
+        signature that survives the removal of every explicit identifier &mdash; the lift over the random baseline is
+        almost an order of magnitude. Second, the leakage is not uniform : Fig.&nbsp;3 shows that a sub-population is
+        substantially more identifiable than the average, and Fig.&nbsp;2 shows that a small fraction of windows leak
+        the bulk of the information. Treating "anonymous IMU" as a uniformly low-risk data type is therefore not
+        defensible.</p>
+
+    <h3 data-num="8.2">Limitations</h3>
+    <ul>
+        <li><strong>Closed-set.</strong> Evaluation assumes the target user is one of 24 known candidates. Open-set
+            detection (rejecting unknown subjects) is not addressed.</li>
+        <li><strong>Population.</strong> 24 subjects is small. The honest interpretation is that the result establishes
+            existence of leakage, not its scaling law with population size.</li>
+        <li><strong>Single device class.</strong> All recordings come from an iPhone&nbsp;6s in the front pocket.
+            Cross-device or cross-placement transfer is out of scope.</li>
+        <li><strong>Single dataset.</strong> MotionSense was collected in controlled lab conditions. Behaviour in the
+            wild may carry more noise and less stable signatures.</li>
+        <li><strong>Adversarial robustness.</strong> The defence sweep uses Gaussian noise as a pedagogical baseline ;
+            it is not a certified differentially-private mechanism.</li>
+        <li><strong>Static model.</strong> No online adaptation, no temporal model across windows beyond posterior
+            aggregation.</li>
+    </ul>
+
+    <h3 data-num="8.3">Privacy-by-design mitigations</h3>
+    <p>The defence stack a deployable IoT product should consider, in increasing implementation cost :</p>
+    <ol>
+        <li><strong>Data minimisation.</strong> Lower the sample rate to the minimum the use-case requires. Drop
+            channels that the application logic does not consume.</li>
+        <li><strong>On-device inference.</strong> Compute the application output (steps, falls, gestures) locally and
+            never ship the raw window to the cloud.</li>
+        <li><strong>Federated learning&nbsp;[9].</strong> When centralised aggregation is required, train without
+            collecting raw traces : only model deltas are exchanged.</li>
+        <li><strong>Differential privacy&nbsp;[10].</strong> When statistics on motion are released, use calibrated
+            noise on the aggregates with a documented privacy budget.</li>
+        <li><strong>Feature-level sharing.</strong> Release coarse statistics (per-day step count, per-week stride
+            variability) rather than raw 50&nbsp;Hz windows.</li>
+        <li><strong>Consent and transparency.</strong> Treat IMU streams as personal data in privacy notices, with
+            granular opt-in and short retention.</li>
+    </ol>
+
+    <div class="callout warn">
+        <div class="callout-title">Ethical scope</div>
+        <p>This work uses a public, peer-reviewed dataset (MotionSense, 24 consenting subjects). No model trained here
+            is shipped against real users. The intent is <strong>defensive</strong> : convince engineers and
+            architects to handle motion data with the same care they apply to faces and voices.</p>
+    </div>
+
+    <!-- ============ §9 CONCLUSION ============ -->
+    <h1 class="section" id="sec-conclusion" data-num="9.">Conclusion</h1>
+    <p>PrivIMU shows, on a public 24-subject benchmark, that anonymous-looking IMU traces carry enough behavioural
+        signature to lift a closed-set identification accuracy from 4&nbsp;% (random) to 39&nbsp;% (Random Forest) and
+        to leak 0.7&nbsp;bit of identity per 1-second window on average. The result is reproducible from a clean clone
+        in four commands ; it ships with a Streamlit lab that lets a non-specialist witness the attack and tune a
+        first defence ; and it is paired with an explicit list of limits and a privacy-by-design mitigation
+        checklist. The wider message for the FF6&nbsp;IoT setting is that motion data should be treated as personal
+        data &mdash; not because every IMU trace identifies every user, but because the signal carries identity in a
+        way that grows with population, model and data scale, and the privacy posture must be set <em>before</em>
+        that scale arrives.</p>
+
+    <!-- ============ REFERENCES ============ -->
+    <section class="references" id="refs">
+        <h2>References</h2>
+        <ol>
+            <li>D. Anguita, A. Ghio, L. Oneto, X. Parra, J. L. Reyes-Ortiz. <em>A Public Domain Dataset for Human
+                Activity Recognition Using Smartphones</em>. ESANN, 2013.</li>
+            <li>M. Malekzadeh, R. G. Clegg, A. Cavallaro, H. Haddadi. <em>Protecting Sensory Data against Sensitive
+                Inferences</em>. W-P2DS@EuroSys, 2018. (Source of the MotionSense dataset.)</li>
+            <li>D. Gafurov. <em>A Survey of Biometric Gait Recognition: Approaches, Security and Challenges</em>.
+                Norsk Informatikkonferanse (NIK), 2007.</li>
+            <li>A. Hadid, M. Ghahramani, V. Kellokumpu, X. Feng, J. Bustard, M. Nixon. <em>Gait Biometrics: A Survey
+                of Approaches and Methods</em>. Pattern Recognition, 2015.</li>
+            <li>M. O. Derawi, C. Nickel, P. Bours, C. Busch. <em>Unobtrusive User-Authentication on Mobile Phones using
+                Biometric Gait Recognition</em>. IIH-MSP, 2010.</li>
+            <li>D. Gafurov, K. Helkala, T. S&oslash;ndrol. <em>Biometric Gait Authentication Using Accelerometer
+                Sensor</em>. Journal of Computers, 2006.</li>
+            <li>M. Mehrnezhad, E. Toreini, S. F. Shahandashti, F. Hao. <em>Stealing PINs via Mobile Sensors: Actual Risk
+                versus User Perception</em>. International Journal of Information Security, 2018.</li>
+            <li>A. Das, N. Borisov, M. Caesar. <em>Tracking Mobile Web Users Through Motion Sensors: Attacks and
+                Defenses</em>. NDSS, 2016.</li>
+            <li>B. McMahan, E. Moore, D. Ramage, S. Hampson, B. Ag&uuml;era y Arcas. <em>Communication-Efficient
+                Learning of Deep Networks from Decentralized Data</em>. AISTATS, 2017.</li>
+            <li>C. Dwork, F. McSherry, K. Nissim, A. Smith. <em>Calibrating Noise to Sensitivity in Private Data
+                Analysis</em>. TCC, 2006.</li>
+        </ol>
+    </section>
+
+    <div class="footer">
+        PrivIMU &middot; FF6 IoT &middot; SUP'COM 2026 &middot; v1.0 &middot; report/PrivIMU_report.pdf
+    </div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,1153 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PrivIMU — Motion data are not automatically anonymous</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Outfit:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #1e40af;
+            --primary-dark: #1e3a8a;
+            --accent-green: #10b981;
+            --accent-orange: #f59e0b;
+            --accent-purple: #7c3aed;
+            --accent-cyan: #06b6d4;
+            --accent-red: #ef4444;
+            --text-main: #0f172a;
+            --text-soft: #334155;
+            --text-muted: #64748b;
+            --bg-main: #f8fafc;
+            --bg-card: #ffffff;
+            --bg-soft: #f1f5f9;
+            --border-light: #e2e8f0;
+            --glass-border: rgba(30, 64, 175, 0.10);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html, body {
+            font-family: 'Inter', -apple-system, system-ui, sans-serif;
+            color: var(--text-main);
+            background: #cbd5e1;
+            -webkit-font-smoothing: antialiased;
+            text-rendering: optimizeLegibility;
+        }
+
+        /* SLIDE = 16:9 page (1280 × 720 base, scaled for print to 11in × 6.1875in) */
+        .slide {
+            width: 1280px;
+            height: 720px;
+            background: var(--bg-main);
+            margin: 24px auto;
+            padding: 56px 72px 48px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 24px rgba(15, 23, 42, 0.12);
+            display: flex;
+            flex-direction: column;
+            page-break-after: always;
+            break-after: page;
+        }
+
+        .slide:last-child { page-break-after: auto; break-after: auto; }
+
+        /* HEADER STRIP (small section badge + slide title) */
+        .slide-header {
+            margin-bottom: 24px;
+            padding-bottom: 14px;
+            border-bottom: 2px solid var(--glass-border);
+            flex-shrink: 0;
+        }
+        .section-badge {
+            display: inline-block;
+            padding: 5px 14px;
+            background: rgba(30, 64, 175, 0.08);
+            color: var(--primary);
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: 0.6px;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+        .section-badge.green  { background: rgba(16, 185, 129, 0.10); color: var(--accent-green); }
+        .section-badge.orange { background: rgba(245, 158, 11, 0.10); color: var(--accent-orange); }
+        .section-badge.purple { background: rgba(124, 58, 237, 0.10); color: var(--accent-purple); }
+        .section-badge.cyan   { background: rgba(6, 182, 212, 0.10); color: var(--accent-cyan); }
+        .section-badge.red    { background: rgba(239, 68, 68, 0.10); color: var(--accent-red); }
+
+        .slide-title {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 800;
+            font-size: 34px;
+            line-height: 1.15;
+            letter-spacing: -0.02em;
+            color: var(--text-main);
+        }
+        .slide-title .accent { color: var(--primary); }
+
+        .slide-body { flex: 1; display: flex; flex-direction: column; gap: 18px; min-height: 0; }
+
+        /* COVER */
+        .cover { justify-content: center; align-items: center; text-align: center; padding: 80px 100px; }
+        .cover .eyebrow {
+            font-size: 13px; letter-spacing: 0.25em; text-transform: uppercase;
+            color: var(--text-muted); font-weight: 700; margin-bottom: 24px;
+        }
+        .cover h1 {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 900; font-size: 80px; line-height: 1.05;
+            letter-spacing: -0.04em; color: var(--text-main); margin-bottom: 18px;
+        }
+        .cover h1 .accent {
+            background: linear-gradient(135deg, var(--accent-green), var(--primary));
+            -webkit-background-clip: text; background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .cover .subtitle {
+            font-family: 'Outfit', sans-serif;
+            font-size: 26px; font-weight: 500; color: var(--text-soft);
+            line-height: 1.35; max-width: 950px; margin: 0 auto 36px;
+        }
+        .cover .pillars {
+            display: grid; grid-template-columns: repeat(3, 1fr);
+            gap: 18px; max-width: 900px; margin: 0 auto 28px;
+        }
+        .cover .pillar {
+            background: var(--bg-card); border: 1px solid var(--border-light);
+            border-radius: 14px; padding: 18px 14px; text-align: left;
+            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+        }
+        .cover .pillar-num {
+            font-family: 'Outfit', sans-serif;
+            font-size: 13px; font-weight: 800; color: var(--primary);
+            letter-spacing: 0.1em; margin-bottom: 4px;
+        }
+        .cover .pillar-num.green  { color: var(--accent-green); }
+        .cover .pillar-num.orange { color: var(--accent-orange); }
+        .cover .pillar-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 18px; font-weight: 700; color: var(--text-main);
+            margin-bottom: 4px;
+        }
+        .cover .pillar-desc { font-size: 13px; color: var(--text-muted); line-height: 1.45; }
+        .cover .meta {
+            margin-top: 24px; font-size: 14px; color: var(--text-muted);
+            line-height: 1.7;
+        }
+        .cover .meta strong { color: var(--text-soft); font-weight: 700; }
+
+        /* GRID HELPERS */
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+        .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
+        .grid-2-1 { display: grid; grid-template-columns: 2fr 1fr; gap: 18px; }
+        .grid-1-2 { display: grid; grid-template-columns: 1fr 2fr; gap: 18px; }
+
+        /* CARD */
+        .card {
+            background: var(--bg-card); border: 1px solid var(--border-light);
+            border-radius: 14px; padding: 18px 20px;
+            box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+        }
+        .card-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 16px; font-weight: 700; color: var(--text-main);
+            margin-bottom: 8px; display: flex; align-items: center; gap: 8px;
+        }
+        .card-text { font-size: 14px; color: var(--text-soft); line-height: 1.55; }
+        .card-text p + p { margin-top: 6px; }
+        .card-text ul { margin: 4px 0 0 18px; }
+        .card-text li { margin-bottom: 3px; }
+        .card-text strong { color: var(--text-main); font-weight: 600; }
+        .card-text code { font-family: 'JetBrains Mono', monospace; font-size: 12.5px; background: var(--bg-soft); padding: 1px 5px; border-radius: 3px; color: var(--primary-dark); }
+
+        .card.accent-blue   { border-left: 4px solid var(--primary); }
+        .card.accent-green  { border-left: 4px solid var(--accent-green); }
+        .card.accent-orange { border-left: 4px solid var(--accent-orange); }
+        .card.accent-purple { border-left: 4px solid var(--accent-purple); }
+        .card.accent-red    { border-left: 4px solid var(--accent-red); }
+        .card.accent-cyan   { border-left: 4px solid var(--accent-cyan); }
+
+        /* INFO BOX */
+        .info-box {
+            background: linear-gradient(135deg, rgba(30,64,175,0.05), rgba(16,185,129,0.05));
+            border: 1px solid var(--glass-border);
+            border-left: 4px solid var(--primary);
+            border-radius: 12px; padding: 16px 20px;
+        }
+        .info-box .ib-title {
+            font-family: 'Outfit', sans-serif;
+            font-size: 13px; font-weight: 700; color: var(--primary);
+            text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px;
+        }
+        .info-box p { font-size: 14.5px; color: var(--text-soft); line-height: 1.55; }
+
+        /* PIPELINE / FLOW */
+        .pipeline { display: flex; align-items: stretch; gap: 8px; margin-top: 6px; }
+        .pipe-step {
+            flex: 1; background: var(--bg-card); border: 1px solid var(--border-light);
+            border-radius: 10px; padding: 14px 10px; text-align: center;
+            box-shadow: 0 1px 4px rgba(15,23,42,0.04);
+        }
+        .pipe-step.highlight { border-color: var(--primary); border-width: 2px; background: linear-gradient(135deg, rgba(30,64,175,0.04), rgba(16,185,129,0.05)); }
+        .pipe-icon { font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 18px; color: var(--primary); margin-bottom: 4px; }
+        .pipe-step.highlight .pipe-icon { color: var(--accent-green); }
+        .pipe-name { font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 13px; color: var(--text-main); margin-bottom: 2px; }
+        .pipe-desc { font-size: 11px; color: var(--text-muted); line-height: 1.35; }
+        .pipe-arrow { display: flex; align-items: center; justify-content: center; color: var(--text-muted); font-weight: 700; font-size: 18px; flex-shrink: 0; }
+
+        /* METRIC TILES */
+        .metric-tile {
+            background: var(--bg-card); border: 1px solid var(--border-light);
+            border-radius: 14px; padding: 18px 16px; text-align: center;
+            box-shadow: 0 2px 8px rgba(15,23,42,0.04);
+        }
+        .metric-value {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 800; font-size: 38px; color: var(--primary);
+            line-height: 1.0; letter-spacing: -0.02em;
+        }
+        .metric-tile.green .metric-value { color: var(--accent-green); }
+        .metric-tile.orange .metric-value { color: var(--accent-orange); }
+        .metric-tile.purple .metric-value { color: var(--accent-purple); }
+        .metric-tile.red .metric-value { color: var(--accent-red); }
+        .metric-tile.cyan .metric-value { color: var(--accent-cyan); }
+        .metric-unit {
+            font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em;
+            color: var(--text-muted); font-weight: 600; margin-top: 4px;
+        }
+        .metric-label { font-size: 13px; color: var(--text-soft); margin-top: 6px; line-height: 1.35; }
+
+        /* TABLE */
+        .table-clean {
+            width: 100%; border-collapse: collapse;
+            font-size: 13.5px; line-height: 1.45; background: var(--bg-card);
+            border-radius: 12px; overflow: hidden;
+            border: 1px solid var(--border-light);
+        }
+        .table-clean th, .table-clean td { padding: 9px 14px; text-align: left; border-bottom: 1px solid var(--border-light); }
+        .table-clean thead th { background: var(--bg-soft); color: var(--text-main); font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; }
+        .table-clean tbody tr:last-child td { border-bottom: none; }
+        .table-clean tbody tr.highlight { background: rgba(30,64,175,0.05); }
+        .table-clean .num { text-align: right; font-family: 'JetBrains Mono', monospace; font-weight: 600; color: var(--primary-dark); }
+
+        /* CODE BLOCK */
+        pre.code, .code {
+            font-family: 'JetBrains Mono', monospace; font-size: 12.5px;
+            background: #0f172a; color: #e2e8f0; padding: 14px 18px;
+            border-radius: 10px; line-height: 1.55; overflow: hidden;
+            border-left: 4px solid var(--accent-green);
+            white-space: pre-wrap; word-break: normal;
+            margin: 0; tab-size: 2;
+        }
+        .code .k { color: #60a5fa; } /* keyword */
+        .code .s { color: #a7f3d0; } /* string */
+        .code .c { color: #94a3b8; } /* comment */
+        .code .o { color: #fbbf24; } /* operator/output */
+
+        /* FOOTER */
+        .slide-footer {
+            position: absolute; left: 72px; right: 72px; bottom: 18px;
+            display: flex; justify-content: space-between; align-items: center;
+            font-size: 11px; color: var(--text-muted); letter-spacing: 0.04em;
+        }
+        .slide-footer .brand { font-family: 'Outfit', sans-serif; font-weight: 700; color: var(--text-soft); letter-spacing: 0.05em; }
+        .slide-footer .speaker { font-style: italic; color: var(--text-muted); }
+        .slide-footer .pagenum { font-family: 'JetBrains Mono', monospace; font-weight: 600; color: var(--text-muted); }
+
+        /* TAKEAWAY (slide 15) */
+        .qr-card {
+            background: var(--bg-card); border: 1px solid var(--border-light);
+            border-radius: 14px; padding: 14px; text-align: center;
+            box-shadow: 0 2px 8px rgba(15,23,42,0.04);
+        }
+        .qr-card img { width: 110px; height: 110px; display: block; margin: 0 auto 8px; image-rendering: pixelated; }
+        .qr-card .qr-title { font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 13px; color: var(--text-main); margin-bottom: 2px; }
+        .qr-card .qr-url { font-family: 'JetBrains Mono', monospace; font-size: 9.5px; color: var(--text-muted); word-break: break-all; line-height: 1.35; }
+
+        /* THREAT FLOW */
+        .threat-flow { display: flex; align-items: stretch; gap: 6px; }
+        .threat-step {
+            flex: 1; background: var(--bg-card); border: 1px solid var(--border-light);
+            border-radius: 10px; padding: 12px 10px;
+            box-shadow: 0 1px 4px rgba(15,23,42,0.04);
+        }
+        .threat-step.attacker { border-color: var(--accent-red); background: rgba(239,68,68,0.04); }
+        .threat-num {
+            font-family: 'Outfit', sans-serif; font-weight: 800; font-size: 12px;
+            color: var(--primary); letter-spacing: 0.08em; margin-bottom: 4px;
+        }
+        .threat-step.attacker .threat-num { color: var(--accent-red); }
+        .threat-name { font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 13px; color: var(--text-main); margin-bottom: 2px; }
+        .threat-desc { font-size: 11.5px; color: var(--text-muted); line-height: 1.35; }
+
+        /* IDENTITY-LOCK MOCK */
+        .identity-mock { background: var(--bg-card); border: 1px solid var(--border-light); border-radius: 12px; padding: 14px; }
+        .identity-bar { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; font-size: 12.5px; }
+        .identity-bar .id { font-family: 'JetBrains Mono', monospace; font-weight: 700; color: var(--text-soft); width: 70px; flex-shrink: 0; }
+        .identity-bar .bar-track { flex: 1; height: 12px; background: var(--bg-soft); border-radius: 6px; overflow: hidden; }
+        .identity-bar .bar-fill { height: 100%; border-radius: 6px; }
+        .identity-bar .bar-fill.gold { background: linear-gradient(90deg, var(--accent-green), var(--primary)); }
+        .identity-bar .bar-fill.silver { background: linear-gradient(90deg, var(--accent-cyan), var(--primary)); opacity: 0.7; }
+        .identity-bar .bar-fill.bronze { background: linear-gradient(90deg, var(--accent-orange), var(--accent-red)); opacity: 0.55; }
+        .identity-bar .pct { font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 12px; color: var(--text-main); width: 50px; text-align: right; flex-shrink: 0; }
+
+        /* DEFENCE CURVE MOCK */
+        .defence-svg { width: 100%; height: 100%; }
+
+        /* PRINT */
+        @media print {
+            html, body { background: white; }
+            .slide {
+                margin: 0; box-shadow: none; width: 100%; height: 100vh;
+                page-break-after: always; break-after: page;
+            }
+            .slide:last-child { page-break-after: auto; break-after: auto; }
+            @page { size: 1280px 720px; margin: 0; }
+        }
+    </style>
+</head>
+
+<body>
+
+<!-- ===================== SLIDE 1 — COVER ===================== -->
+<section class="slide cover" id="s1">
+    <div class="eyebrow">SUP'COM &middot; FF6 IoT, Cloud &amp; Big Data &middot; 2026</div>
+    <h1>Priv<span class="accent">IMU</span></h1>
+    <p class="subtitle">Motion data are not automatically anonymous.<br>
+        A reproducible privacy lab on accelerometer &amp; gyroscope traces.</p>
+    <div class="pillars">
+        <div class="pillar">
+            <div class="pillar-num">01 &nbsp;&middot;&nbsp; ATTACK</div>
+            <div class="pillar-title">Re-identify anyone</div>
+            <div class="pillar-desc">A Random Forest classifier predicts the most likely subject from anonymous IMU windows.</div>
+        </div>
+        <div class="pillar">
+            <div class="pillar-num green">02 &nbsp;&middot;&nbsp; MEASURE</div>
+            <div class="pillar-title">Quantify leakage</div>
+            <div class="pillar-desc">Top-1, Top-3, Macro-F1 and posterior entropy &Delta;H, all generated by code.</div>
+        </div>
+        <div class="pillar">
+            <div class="pillar-num orange">03 &nbsp;&middot;&nbsp; DEFEND</div>
+            <div class="pillar-title">Test mitigations</div>
+            <div class="pillar-desc">Live Streamlit defence lab : Gaussian noise sweep, identity-lock replay, evidence card.</div>
+        </div>
+    </div>
+    <div class="meta">
+        <strong>Group of 5 &mdash; FF6 IoT, Cloud &amp; Big Data</strong> &middot;
+        Mr. Mohamed Ould-Elhassen Aoueileyine &middot; SUP'COM<br>
+        <strong>Repo</strong> github.com/akiroussama/PrivIMU &nbsp;&middot;&nbsp; <strong>Demo</strong> Streamlit &nbsp;&middot;&nbsp; <strong>Notebook</strong> Google Colab
+    </div>
+</section>
+
+<!-- ===================== SLIDE 2 — IMU IN IoT ===================== -->
+<section class="slide" id="s2">
+    <div class="slide-header">
+        <span class="section-badge">Act I &mdash; Context</span>
+        <h2 class="slide-title">IMU sensors are <span class="accent">everywhere</span> in IoT</h2>
+    </div>
+    <div class="slide-body">
+        <div class="grid-4" style="gap: 14px;">
+            <div class="card accent-blue">
+                <div class="card-title">Smartphones</div>
+                <div class="card-text">DeviceMotion API on every iOS / Android phone. Default-enabled by web pages without prompt.</div>
+            </div>
+            <div class="card accent-green">
+                <div class="card-title">Wearables</div>
+                <div class="card-text">Smartwatches, fitness bands, sleep trackers. Continuous accelerometer + gyroscope at 50&ndash;200 Hz.</div>
+            </div>
+            <div class="card accent-orange">
+                <div class="card-title">Smart mobility</div>
+                <div class="card-text">Connected vehicles, e-scooters, drones. Inertial signals shared with telemetry back-ends.</div>
+            </div>
+            <div class="card accent-purple">
+                <div class="card-title">Health &amp; sport</div>
+                <div class="card-text">Gait monitoring, fall detection, rehab apps, AR/VR headsets. Often forwarded to third-party clouds.</div>
+            </div>
+        </div>
+        <div class="info-box">
+            <div class="ib-title">Why this slide matters</div>
+            <p>IMU streams are perceived as <strong>low-risk</strong> because they don't carry a name, a face or a voice. They are routinely collected, stored, shared with analytics SDKs, and treated as <em>"anonymous telemetry"</em>. PrivIMU asks a simple question : <strong>is that perception correct ?</strong></p>
+        </div>
+    </div>
+    <div class="slide-footer">
+        <span class="brand">PrivIMU &middot; SUP'COM 2026</span>
+        <span class="speaker">M1 &mdash; Introduction</span>
+        <span class="pagenum">02 / 15</span>
+    </div>
+</section>
+
+<!-- ===================== SLIDE 3 — SCIENTIFIC QUESTION ===================== -->
+<section class="slide" id="s3">
+    <div class="slide-header">
+        <span class="section-badge">Act I &mdash; Question</span>
+        <h2 class="slide-title">Anonymous &ne; <span class="accent">non-identifiable</span></h2>
+    </div>
+    <div class="slide-body">
+        <div class="grid-2-1">
+            <div class="card accent-blue">
+                <div class="card-title">The scientific question</div>
+                <div class="card-text">
+                    <p style="font-size: 17px; line-height: 1.5; color: var(--text-main); font-weight: 500;">Can a supervised classifier trained on accelerometer + gyroscope windows
+                        <strong>re-identify a user</strong> among 24 enrolled candidates,
+                        when the input contains <strong>no direct identifier</strong> (no name, email, MAC, IMEI) ?</p>
+                    <p style="margin-top: 12px;">The problem is not the explicit identifier. The problem is the <strong>latent behavioural signature</strong> hidden in motion patterns &mdash; gait, posture micro-tremor, hand dynamics.</p>
+                </div>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 14px;">
+                <div class="metric-tile red">
+                    <div class="metric-value">4.17%</div>
+                    <div class="metric-unit">random baseline</div>
+                    <div class="metric-label">Guessing 1 of 24 subjects uniformly = 1 / 24.</div>
+                </div>
+                <div class="metric-tile green">
+                    <div class="metric-value">&#x1f3af;</div>
+                    <div class="metric-unit">target</div>
+                    <div class="metric-label">Beat the baseline by an order of magnitude using only IMU windows.</div>
+                </div>
+            </div>
+        </div>
+        <div class="info-box">
+            <div class="ib-title">Hypothesis</div>
+            <p>1-second windows of 6 IMU channels (rotationRate.{x,y,z} + userAcceleration.{x,y,z}) carry enough behavioural information to be a <strong>quasi-identifier</strong> in a closed-set setting. The next slides design the threat model that operationalises that hypothesis.</p>
+        </div>
+    </div>
+    <div class="slide-footer">
+        <span class="brand">PrivIMU &middot; SUP'COM 2026</span>
+        <span class="speaker">M1 &mdash; Introduction</span>
+        <span class="pagenum">03 / 15</span>
+    </div>
+</section>
+
+<!-- ===================== SLIDE 4 — THREAT MODEL ===================== -->
+<section class="slide" id="s4">
+    <div class="slide-header">
+        <span class="section-badge red">Act II &mdash; Threat model</span>
+        <h2 class="slide-title">From anonymous stream to <span style="color: var(--accent-red);">top-3 identity</span></h2>
+    </div>
+    <div class="slide-body">
+        <div class="threat-flow">
+            <div class="threat-step">
+                <div class="threat-num">USER</div>
+                <div class="threat-name">Wears device</div>
+                <div class="threat-desc">Smartphone in pocket records DeviceMotion at 50 Hz.</div>
+            </div>
+            <div class="pipe-arrow">&rarr;</div>
+            <div class="threat-step">
+                <div class="threat-num">APP</div>
+                <div class="threat-name">Collects IMU</div>
+                <div class="threat-desc">Sport / health / analytics SDK ingests raw windows.</div>
+            </div>
+            <div class="pipe-arrow">&rarr;</div>
+            <div class="threat-step">
+                <div class="threat-num">CLOUD</div>
+                <div class="threat-name">"Anonymises"</div>
+                <div class="threat-desc">Strips name, email, account ID. Keeps raw signals.</div>
+            </div>
+            <div class="pipe-arrow">&rarr;</div>
+            <div class="threat-step attacker">
+                <div class="threat-num">ATTACKER</div>
+                <div class="threat-name">Trains classifier</div>
+                <div class="threat-desc">Has reference traces from known subjects (insider, leak, bait app).</div>
+            </div>
+            <div class="pipe-arrow">&rarr;</div>
+            <div class="threat-step attacker">
+                <div class="threat-num">OUTPUT</div>
+                <div class="threat-name">Top-3 identity</div>
+                <div class="threat-desc">Posterior over 24 candidate subjects + leakage score.</div>
+            </div>
+        </div>
+        <div class="grid-2">
+            <div class="card accent-red">
+                <div class="card-title">Attacker capabilities</div>
+                <div class="card-text">
+                    <ul>
+                        <li><strong>Knows</strong> a candidate set of 24 enrolled users.</li>
+                        <li><strong>Owns</strong> labelled training traces for each candidate.</li>
+                        <li><strong>Receives</strong> anonymous IMU windows from the target.</li>
+                        <li><strong>Computes</strong> a top-k ranking over the candidate set.</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="card accent-blue">
+                <div class="card-title">Ethical scope</div>
+                <div class="card-text">
+                    <p>This is a <strong>controlled academic study</strong> on a public dataset (MotionSense, 24 consenting subjects). No real-world targeting, no model is shipped against real users.</p>
+                    <p style="margin-top: 6px;">Goal : <strong>defensive privacy-by-design</strong> &mdash; convince engineers to treat motion traces as PII.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="slide-footer">
+        <span class="brand">PrivIMU &middot; SUP'COM 2026</span>
+        <span class="speaker">M2 &mdash; Threat model</span>
+        <span class="pagenum">04 / 15</span>
+    </div>
+</section>
+
+<!-- ===================== SLIDE 5 — RELATED WORK ===================== -->
+<section class="slide" id="s5">
+    <div class="slide-header">
+        <span class="section-badge purple">Act II &mdash; Positioning</span>
+        <h2 class="slide-title">From activity recognition to <span style="color: var(--accent-purple);">identity leakage</span></h2>
+    </div>
+    <div class="slide-body">
+        <div class="grid-3">
+            <div class="card accent-blue">
+                <div class="card-title">Human Activity Recognition</div>
+                <div class="card-text">
+                    <p>Anguita 2013 (UCI HAR), Malekzadeh 2018 (MotionSense). <em>Same channels, different label : the activity, not the user.</em></p>
+                </div>
+            </div>
+            <div class="card accent-green">
+                <div class="card-title">Behavioural biometrics</div>
+                <div class="card-text">
+                    <p>Gait recognition (Gafurov 2007, Derawi 2010), keystroke dynamics, smartphone-touch biometrics. <em>Identity is the goal, often with cooperative protocols.</em></p>
+                </div>
+            </div>
+            <div class="card accent-red">
+                <div class="card-title">Sensor privacy leakage</div>
+                <div class="card-text">
+                    <p>Mehrnezhad 2018 (touch via motion), Das 2016 (accelerometer fingerprinting), AccessMine 2019. <em>Demonstrate that sensors leak more than expected.</em></p>
+                </div>
+            </div>
+        </div>
+        <div class="grid-1-2">
+            <div class="card accent-purple">
+                <div class="card-title">Where PrivIMU sits</div>
+                <div class="card-text">
+                    <p>HAR + biometrics + leakage, repackaged as a <strong>reproducible privacy lab</strong> with attack &amp; defence on the same dataset.</p>
+                </div>
+            </div>
+            <div class="card accent-orange">
+                <div class="card-title">Defences in the literature</div>
+                <div class="card-text">
+                    <p>Data minimisation, on-device computation, differential privacy, federated learning, additive noise, feature-level sharing. PrivIMU prototypes one (Gaussian noise) and discusses the rest as a privacy-by-design checklist.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="slide-footer">
+        <span class="brand">PrivIMU &middot; SUP'COM 2026</span>
+        <span class="speaker">M2 &mdash; State of the art</span>
+        <span class="pagenum">05 / 15</span>
+    </div>
+</section>
+
+<!-- ===================== SLIDE 6 — DATASET ===================== -->
+<section class="slide" id="s6">
+    <div class="slide-header">
+        <span class="section-badge green">Act III &mdash; Dataset</span>
+        <h2 class="slide-title">MotionSense &mdash; <span style="color: var(--accent-green);">24 subjects</span>, 6 activities, iPhone in pocket</h2>
+    </div>
+    <div class="slide-body">
+        <div class="grid-4">
+            <div class="metric-tile">
+                <div class="metric-value">24</div>
+                <div class="metric-unit">subjects</div>
+                <div class="metric-label">closed-set, balanced</div>
+            </div>
+            <div class="metric-tile green">
+                <div class="metric-value">6</div>
+                <div class="metric-unit">activities</div>
+                <div class="metric-label">wlk &middot; jog &middot; ups &middot; dws &middot; sit &middot; std</div>
+            </div>
+            <div class="metric-tile orange">
+                <div class="metric-value">50<span style="font-size: 18px;"> Hz</span></div>
+                <div class="metric-unit">sampling</div>
+                <div class="metric-label">DeviceMotion API, fixed rate</div>
+            </div>
+            <div class="metric-tile purple">
+                <div class="metric-value">6</div>
+                <div class="metric-unit">channels</div>
+                <div class="metric-label">rotationRate.{x,y,z} + userAcceleration.{x,y,z}</div>
+            </div>
+        </div>
+        <div class="grid-2">
+            <div class="card accent-green">
+                <div class="card-title">Why MotionSense ?</div>
+                <div class="card-text">
+                    <ul>
+                        <li>Public, peer-reviewed, easy to redistribute.</li>
+                        <li>Same physical hardware (iPhone 6s) across all subjects &rarr; isolates the <strong>behavioural</strong> signal from the <strong>device-fingerprint</strong> signal.</li>
+                        <li>Multiple activities per subject &rarr; allows cross-trial evaluation.</li>
+                        <li>Simple CSV layout &rarr; reproducible for any audience.</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="card accent-blue">
+                <div class="card-title">CSV schema</div>
+                <pre class="code" style="margin-top: 4px;">
+<span class="c"># A_DeviceMotion_data/wlk_7/sub_3.csv</span>
+<span class="k">columns</span>: attitude.{roll,pitch,yaw}
+         gravity.{x,y,z}
+         <span class="o">rotationRate.{x,y,z}</span>     <span class="c"># used</span>
+         <span class="o">userAcceleration.{x,y,z}</span>  <span class="c"># used</span>
+                </pre>
+            </div>
+        </div>
+    </div>
+    <div class="slide-footer">
+        <span class="brand">PrivIMU &middot; SUP'COM 2026</span>
+        <span class="speaker">M3 &mdash; Dataset &amp; pipeline</span>
+        <span class="pagenum">06 / 15</span>
+    </div>
+</section>
+
+<!-- ===================== SLIDE 7 — REPRODUCIBLE PIPELINE ===================== -->
+<section class="slide" id="s7">
+    <div class="slide-header">
+        <span class="section-badge">Act III &mdash; Pipeline</span>
+        <h2 class="slide-title">A <span class="accent">reproducible</span> privacy pipeline</h2>
+    </div>
+    <div class="slide-body">
+        <div class="pipeline">
+            <div class="pipe-step">
+                <div class="pipe-icon">01</div>
+                <div class="pipe-name">CSV ingest</div>
+                <div class="pipe-desc">data.py walks A_DeviceMotion_data/, parses 24&times;6 trials.</div>
+            </div>
+            <div class="pipe-arrow">&rarr;</div>
+            <div class="pipe-step">
+                <div class="pipe-icon">02</div>
+                <div class="pipe-name">Windowing</div>
+                <div class="pipe-desc">1 s windows, 50% overlap, z-score per channel.</div>
+            </div>
+            <div class="pipe-arrow">&rarr;</div>
+            <div class="pipe-step">
+                <div class="pipe-icon">03</div>
+                <div class="pipe-name">Features</div>
+                <div class="pipe-desc">10 stats &times; 6 channels = 60 features / window.</div>
+            </div>
+            <div class="pipe-arrow">&rarr;</div>
+            <div class="pipe-step highlight">
+                <div class="pipe-icon">04</div>
+                <div class="pipe-name">Random Forest</div>
+                <div class="pipe-desc">200 trees, 5-fold GroupKFold by activity_trial.</div>
+            </div>
+            <div class="pipe-arrow">&rarr;</div>
+            <div class="pipe-step">
+                <div class="pipe-icon">05</div>
+                <div class="pipe-name">metrics.json</div>
+                <div class="pipe-desc">Top-1, Top-3, F1, &Delta;H, latency, figures.</div>
+            </div>
+            <div class="pipe-arrow">&rarr;</div>
+            <div class="pipe-step">
+                <div class="pipe-icon">06</div>
+                <div class="pipe-name">Streamlit demo</div>
+                <div class="pipe-desc">CSV upload &rarr; top-3 + leakage + noise sweep + evidence card.</div>
+            </div>
+        </div>
+        <div class="grid-2">
+            <div class="card accent-green">
+                <div class="card-title">One command, end to end</div>
+                <pre class="code" style="margin-top: 4px;">
+<span class="c"># scaffold &amp; run</span>
+<span class="k">$</span> python -m pip install -e <span class="s">".[dev,app]"</span>
+<span class="k">$</span> python data/download.py --dest data/raw/motionsense
+<span class="k">$</span> python -m privimu.train --data-root data/raw/motionsense \
+        --model rf --n-splits <span class="o">5</span> --n-estimators <span class="o">200</span>
+<span class="k">$</span> streamlit run streamlit_app.py
+                </pre>
+            </div>
+            <div class="info-box" style="border-left-color: var(--accent-green);">
+                <div class="ib-title" style="color: var(--accent-green);">Source of truth</div>
+                <p><code style="background: var(--bg-soft); padding: 2px 6px; border-radius: 4px; font-family: 'JetBrains Mono', monospace;">reports/metrics.json</code> is the single artefact every number in this deck and in the report points to. If a value is not in <code>metrics.json</code>, it is not in the slide.</p>
+                <p style="margin-top: 6px;">CI runs <code>pytest -q</code> on every push (8 unit tests, scaffold integrity).</p>
+            </div>
+        </div>
+    </div>
+    <div class="slide-footer">
+        <span class="brand">PrivIMU &middot; SUP'COM 2026</span>
+        <span class="speaker">M3 &mdash; Dataset &amp; pipeline</span>
+        <span class="pagenum">07 / 15</span>
+    </div>
+</section>
+
+<!-- ===================== SLIDE 8 — PREPROCESSING & MODELS ===================== -->
+<section class="slide" id="s8">
+    <div class="slide-header">
+        <span class="section-badge orange">Act III &mdash; Method</span>
+        <h2 class="slide-title">How the signal becomes <span style="color: var(--accent-orange);">evidence</span></h2>
+    </div>
+    <div class="slide-body">
+        <div class="grid-3">
+            <div class="card accent-blue">
+                <div class="card-title">Windowing</div>
+                <div class="card-text">
+                    <ul>
+                        <li>1 second = <code>50</code> samples</li>
+                        <li>50% overlap = step <code>25</code></li>
+                        <li>z-score per window per channel</li>
+                        <li>final dataset : <strong>55 982 windows</strong></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="card accent-green">
+                <div class="card-title">Features (60 per window)</div>
+                <div class="card-text">
+                    <p style="margin-bottom: 4px;">For each of 6 channels, 10 statistics :</p>
+                    <ul>
+                        <li>mean, std, rms, min, max, median</li>
+                        <li>iqr, skew, kurtosis</li>
+                        <li>spectral entropy</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="card accent-purple">
+                <div class="card-title">Models</div>
+                <div class="card-text">
+                    <ul>
+                        <li><strong>Random Forest</strong> (primary) &mdash; 200 trees, balanced subsample.</li>
+                        <li><strong>1D-CNN</strong> (extension) &mdash; raw windows, 3 conv blocks, in <code>model_cnn.py</code>.</li>
+                        <li>Both trained with <strong>GroupKFold</strong> over <code>activity_trial</code>.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="info-box" style="border-left-color: var(--accent-orange);">
+            <div class="ib-title" style="color: var(--accent-orange);">Why GroupKFold matters</div>
+            <p>Naive K-fold splits randomly across windows of the <em>same</em> trial &rarr; data-leakage between train and test &rarr; over-optimistic top-1. PrivIMU groups by <code>(subject, activity, trial)</code> and forces folds to never split a trial. <strong>This is what makes our 39% top-1 honest.</strong></p>
+        </div>
+    </div>
+    <div class="slide-footer">
+        <span class="brand">PrivIMU &middot; SUP'COM 2026</span>
+        <span class="speaker">M3 &mdash; Method</span>
+        <span class="pagenum">08 / 15</span>
+    </div>
+</section>
+
+<!-- ===================== SLIDE 9 — EVALUATION PROTOCOL ===================== -->
+<section class="slide" id="s9">
+    <div class="slide-header">
+        <span class="section-badge cyan">Act III &mdash; Evaluation</span>
+        <h2 class="slide-title">Evaluation : <span style="color: var(--accent-cyan);">avoid inflated results</span></h2>
+    </div>
+    <div class="slide-body">
+        <div class="grid-2">
+            <div class="card accent-cyan">
+                <div class="card-title">Metrics, all generated by code</div>
+                <div class="card-text">
+                    <ul>
+                        <li><strong>Top-1 accuracy</strong> &mdash; right subject ranked first.</li>
+                        <li><strong>Top-3 accuracy</strong> &mdash; right subject in top 3.</li>
+                        <li><strong>Macro-F1</strong> &mdash; balanced across 24 subjects.</li>
+                        <li><strong>Confusion matrix</strong> &mdash; visual diagnostic.</li>
+                        <li><strong>Per-subject F1</strong> &mdash; spot vulnerable users.</li>
+                        <li><strong>Posterior entropy</strong> H(p) &mdash; uncertainty (bits).</li>
+                        <li><strong>Privacy leakage</strong> &Delta;H = log<sub>2</sub>(24) &minus; H(p).</li>
+                        <li><strong>Latency</strong> ms / window &mdash; deployability.</li>
+                    </ul>
+                </div>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 14px;">
+                <div class="card accent-blue">
+                    <div class="card-title">Cross-validation strategy</div>
+                    <div class="card-text">
+                        <p><code>GroupKFold(n_splits=5, group_key="activity_trial")</code></p>
+                        <p style="margin-top: 4px;">Each of the 5 folds holds out a subset of trials. The model is trained on the remaining trials and predicts on out-of-fold windows. We aggregate <strong>out-of-fold posteriors</strong> over the full 55 982 windows.</p>
+                    </div>
+                </div>
+                <div class="info-box">
+                    <div class="ib-title">Honesty rule</div>
+                    <p>If our split is <strong>not</strong> Leave-One-Trial-Out, we don't claim it. The deck and report state exactly what <code>train.py</code> does : <strong>5-fold GroupKFold by activity-trial</strong>.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="slide-footer">
+        <span class="brand">PrivIMU &middot; SUP'COM 2026</span>
+        <span class="speaker">M3 &mdash; Evaluation</span>
+        <span class="pagenum">09 / 15</span>
+    </div>
+</section>
+
+<!-- ===================== SLIDE 10 — DEMO ARCHITECTURE ===================== -->
+<section class="slide" id="s10">
+    <div class="slide-header">
+        <span class="section-badge">Act IV &mdash; Demo</span>
+        <h2 class="slide-title">Live demo : <span class="accent">from CSV to privacy risk</span></h2>
+    </div>
+    <div class="slide-body">
+        <div class="pipeline">
+            <div class="pipe-step">
+                <div class="pipe-icon">A</div>
+                <div class="pipe-name">Pick CSV</div>
+                <div class="pipe-desc">examples/wlk_7/sub_*.csv or upload your own.</div>
+            </div>
+            <div class="pipe-arrow">&rarr;</div>
+            <div class="pipe-step">
+                <div class="pipe-icon">B</div>
+                <div class="pipe-name">Plot signal</div>
+                <div class="pipe-desc">Plotly accelerometer + gyroscope curves.</div>
+            </div>
+            <div class="pipe-arrow">&rarr;</div>
+            <div class="pipe-step highlight">
+                <div class="pipe-icon">C</div>
+                <div class="pipe-name">Top-3 identity</div>
+                <div class="pipe-desc">Posterior over 24 subjects, ranked.</div>
+            </div>
+            <div class="pipe-arrow">&rarr;</div>
+            <div class="pipe-step highlight">
+                <div class="pipe-icon">D</div>
+                <div class="pipe-name">&Delta;H score</div>
+                <div class="pipe-desc">Privacy entropy leakage in bits.</div>
+            </div>
+            <div class="pipe-arrow">&rarr;</div>
+            <div class="pipe-step">
+                <div class="pipe-icon">E</div>
+                <div class="pipe-name">Noise slider</div>
+                <div class="pipe-desc">Inject Gaussian &sigma; on raw signal.</div>
+            </div>
+            <div class="pipe-arrow">&rarr;</div>
+            <div class="pipe-step">
+                <div class="pipe-icon">F</div>
+                <div class="pipe-name">Evidence card</div>
+                <div class="pipe-desc">Download JSON + Markdown summary.</div>
+            </div>
+        </div>
+        <div class="grid-3">
+            <div class="card accent-orange">
+                <div class="card-title">WOW #1 &mdash; Identity-lock replay</div>
+                <div class="card-text">
+                    <p>Window-by-window posterior. Confidence curve. Identity-lock time. Top-3 evolves on screen.</p>
+                </div>
+            </div>
+            <div class="card accent-green">
+                <div class="card-title">WOW #2 &mdash; Blue-team defence lab</div>
+                <div class="card-text">
+                    <p>Sweep &sigma;. Plot top-1 confidence vs leakage vs signal preservation. Recommend a noise level.</p>
+                </div>
+            </div>
+            <div class="card accent-blue">
+                <div class="card-title">WOW #3 &mdash; Evidence card</div>
+                <div class="card-text">
+                    <p>One-click JSON + Markdown bundle : source, top-3, &Delta;H, &sigma;, identity lock, timestamp.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="slide-footer">
+        <span class="brand">PrivIMU &middot; SUP'COM 2026</span>
+        <span class="speaker">M4 &mdash; Demo</span>
+        <span class="pagenum">10 / 15</span>
+    </div>
+</section>
+
+<!-- ===================== SLIDE 11 — LIVE ATTACK MOCK ===================== -->
+<section class="slide" id="s11">
+    <div class="slide-header">
+        <span class="section-badge red">Act IV &mdash; Live attack</span>
+        <h2 class="slide-title">A single window already <span style="color: var(--accent-red);">narrows the search</span></h2>
+    </div>
+    <div class="slide-body">
+        <div class="grid-2">
+            <div class="card accent-red">
+                <div class="card-title">Anonymous CSV input</div>
+                <pre class="code" style="margin-top: 4px;">
+<span class="c"># wlk_7/sub_3.csv (excerpt)</span>
+attitude.roll, gravity.x, rotationRate.x, ...
+   <span class="o">-1.34, -0.27,  0.118, ...</span>
+   <span class="o">-1.33, -0.27,  0.103, ...</span>
+   <span class="o">-1.34, -0.27,  0.118, ...</span>
+<span class="c"># 50 samples = 1 second window</span>
+<span class="c"># &uarr; no name, no e-mail, no MAC</span>
+                </pre>
+                <div class="card-text" style="margin-top: 8px;">
+                    <p>The attacker only sees raw inertial samples. No metadata is needed.</p>
+                </div>
+            </div>
+            <div class="card accent-blue">
+                <div class="card-title">Top-3 ranked output</div>
+                <div class="identity-mock">
+                    <div class="identity-bar">
+                        <span class="id">sub_3</span>
+                        <div class="bar-track"><div class="bar-fill gold" style="width: 71%;"></div></div>
+                        <span class="pct">0.71</span>
+                    </div>
+                    <div class="identity-bar">
+                        <span class="id">sub_14</span>
+                        <div class="bar-track"><div class="bar-fill silver" style="width: 14%;"></div></div>
+                        <span class="pct">0.14</span>
+                    </div>
+                    <div class="identity-bar">
+                        <span class="id">sub_22</span>
+                        <div class="bar-track"><div class="bar-fill bronze" style="width: 6%;"></div></div>
+                        <span class="pct">0.06</span>
+                    </div>
+                    <div class="identity-bar" style="opacity: 0.45;">
+                        <span class="id">sub_8</span>
+                        <div class="bar-track"><div class="bar-fill" style="width: 3%; background: var(--text-muted);"></div></div>
+                        <span class="pct">0.03</span>
+                    </div>
+                    <div class="identity-bar" style="opacity: 0.45;">
+                        <span class="id">sub_18</span>
+                        <div class="bar-track"><div class="bar-fill" style="width: 2%; background: var(--text-muted);"></div></div>
+                        <span class="pct">0.02</span>
+                    </div>
+                    <div class="identity-bar" style="opacity: 0.45; font-style: italic;">
+                        <span class="id">19 others</span>
+                        <div class="bar-track"><div class="bar-fill" style="width: 4%; background: var(--text-muted);"></div></div>
+                        <span class="pct">0.04</span>
+                    </div>
+                </div>
+                <div class="card-text" style="margin-top: 8px; text-align: right;">
+                    <p style="font-size: 12.5px;">Posterior on a single 1 s window from <code>wlk_7/sub_3</code> &mdash; illustrative.</p>
+                </div>
+            </div>
+        </div>
+        <div class="info-box" style="border-left-color: var(--accent-red);">
+            <div class="ib-title" style="color: var(--accent-red);">The reveal</div>
+            <p>The signal carried <strong>no explicit identity</strong>. The model still concentrated 0.71 of its probability mass on the right subject, leaving 0.29 spread over 23 others. <strong>That distribution &mdash; not a single number &mdash; is the privacy leakage.</strong></p>
+        </div>
+    </div>
+    <div class="slide-footer">
+        <span class="brand">PrivIMU &middot; SUP'COM 2026</span>
+        <span class="speaker">M4 &mdash; Live attack</span>
+        <span class="pagenum">11 / 15</span>
+    </div>
+</section>
+
+<!-- ===================== SLIDE 12 — NOISE DEFENCE ===================== -->
+<section class="slide" id="s12">
+    <div class="slide-header">
+        <span class="section-badge green">Act IV &mdash; Defence</span>
+        <h2 class="slide-title">Blue team : <span style="color: var(--accent-green);">how loud must we be</span> to hide ?</h2>
+    </div>
+    <div class="slide-body">
+        <div class="grid-2">
+            <div class="card accent-green">
+                <div class="card-title">Defence model</div>
+                <div class="card-text">
+                    <p>Inject Gaussian noise <code>x' = x + &epsilon;</code>, <code>&epsilon; &sim; &Nopf;(0, &sigma;<sup>2</sup>)</code>, before any feature is computed.
+                       Sweep &sigma; and observe the trade-off between <strong>privacy gain</strong> (lower top-1, higher posterior entropy) and <strong>utility loss</strong> (signal-preservation proxy on raw channels).</p>
+                </div>
+            </div>
+            <div class="card accent-blue" style="padding: 10px 14px;">
+                <div class="card-title">Trade-off curve (illustrative)</div>
+                <svg class="defence-svg" viewBox="0 0 460 220" preserveAspectRatio="xMidYMid meet">
+                    <!-- axes -->
+                    <line x1="40" y1="190" x2="440" y2="190" stroke="#cbd5e1" stroke-width="1.5"/>
+                    <line x1="40" y1="190" x2="40" y2="20"  stroke="#cbd5e1" stroke-width="1.5"/>
+                    <text x="240" y="212" font-family="Inter" font-size="11" fill="#64748b" text-anchor="middle">Noise &sigma; (relative to signal std)</text>
+                    <text x="14" y="105" font-family="Inter" font-size="11" fill="#64748b" text-anchor="middle" transform="rotate(-90 14 105)">Score (0&ndash;1)</text>
+                    <!-- gridlines -->
+                    <line x1="40" y1="60"  x2="440" y2="60"  stroke="#e2e8f0" stroke-dasharray="3 3"/>
+                    <line x1="40" y1="105" x2="440" y2="105" stroke="#e2e8f0" stroke-dasharray="3 3"/>
+                    <line x1="40" y1="150" x2="440" y2="150" stroke="#e2e8f0" stroke-dasharray="3 3"/>
+                    <text x="34" y="64"  font-family="JetBrains Mono" font-size="9" fill="#94a3b8" text-anchor="end">1.0</text>
+                    <text x="34" y="109" font-family="JetBrains Mono" font-size="9" fill="#94a3b8" text-anchor="end">0.5</text>
+                    <text x="34" y="154" font-family="JetBrains Mono" font-size="9" fill="#94a3b8" text-anchor="end">0.2</text>
+                    <text x="34" y="194" font-family="JetBrains Mono" font-size="9" fill="#94a3b8" text-anchor="end">0.0</text>
+                    <!-- top-1 confidence (decreasing) -->
+                    <path d="M 40 50 C 100 56, 160 70, 220 100 S 360 165, 440 175"
+                          fill="none" stroke="#ef4444" stroke-width="2.5"/>
+                    <!-- leakage normalised (decreasing) -->
+                    <path d="M 40 65 C 100 75, 160 95, 220 125 S 360 175, 440 184"
+                          fill="none" stroke="#f59e0b" stroke-width="2.5" stroke-dasharray="4 3"/>
+                    <!-- signal preservation (decreasing) -->
+                    <path d="M 40 55 C 110 60, 180 75, 240 95 S 360 145, 440 165"
+                          fill="none" stroke="#10b981" stroke-width="2.5" stroke-dasharray="2 2"/>
+                    <!-- recommendation marker -->
+                    <line x1="240" y1="20" x2="240" y2="190" stroke="#7c3aed" stroke-width="1.5" stroke-dasharray="3 2" opacity="0.5"/>
+                    <text x="244" y="32" font-family="Outfit" font-size="11" fill="#7c3aed" font-weight="700">Recommended &sigma;</text>
+                    <!-- legend -->
+                    <rect x="48"  y="6" width="10" height="3" fill="#ef4444"/>
+                    <text x="62"  y="11" font-family="Inter" font-size="10" fill="#334155">Top-1 confidence</text>
+                    <rect x="180" y="6" width="10" height="3" fill="#f59e0b"/>
+                    <text x="194" y="11" font-family="Inter" font-size="10" fill="#334155">Leakage &Delta;H (norm.)</text>
+                    <rect x="335" y="6" width="10" height="3" fill="#10b981"/>
+                    <text x="349" y="11" font-family="Inter" font-size="10" fill="#334155">Signal preservation</text>
+                </svg>
+            </div>
+        </div>
+        <div class="info-box" style="border-left-color: var(--accent-green);">
+            <div class="ib-title" style="color: var(--accent-green);">Take-away</div>
+            <p>Gaussian noise is a pedagogical baseline, not a guarantee. The right defence stack mixes <strong>data minimisation</strong> (reduce sample rate, drop channels), <strong>on-device computation</strong> (don't send raw windows), and <strong>differential privacy</strong> (calibrated noise on aggregates). PrivIMU shows the <em>shape</em> of that trade-off live in the demo.</p>
+        </div>
+    </div>
+    <div class="slide-footer">
+        <span class="brand">PrivIMU &middot; SUP'COM 2026</span>
+        <span class="speaker">M4 &mdash; Defence</span>
+        <span class="pagenum">12 / 15</span>
+    </div>
+</section>
+
+<!-- ===================== SLIDE 13 — RESULTS (FROM metrics.json) ===================== -->
+<section class="slide" id="s13">
+    <div class="slide-header">
+        <span class="section-badge">Act V &mdash; Results</span>
+        <h2 class="slide-title">Results &mdash; <span class="accent">measured</span>, not hand-written</h2>
+    </div>
+    <div class="slide-body">
+        <div class="grid-4">
+            <div class="metric-tile">
+                <div class="metric-value">39.06%</div>
+                <div class="metric-unit">Top-1 accuracy</div>
+                <div class="metric-label">9.4&times; the random baseline (4.17%)</div>
+            </div>
+            <div class="metric-tile green">
+                <div class="metric-value">52.80%</div>
+                <div class="metric-unit">Top-3 accuracy</div>
+                <div class="metric-label">true subject in top 3 candidates</div>
+            </div>
+            <div class="metric-tile orange">
+                <div class="metric-value">0.391</div>
+                <div class="metric-unit">Macro-F1</div>
+                <div class="metric-label">balanced across 24 subjects</div>
+            </div>
+            <div class="metric-tile purple">
+                <div class="metric-value">0.700</div>
+                <div class="metric-unit">&Delta;H bits</div>
+                <div class="metric-label">posterior entropy leakage (mean)</div>
+            </div>
+        </div>
+        <div class="grid-2">
+            <div class="card accent-blue">
+                <div class="card-title">Run configuration</div>
+                <table class="table-clean">
+                    <tbody>
+                        <tr><td>Model</td><td class="num">RandomForest, 200 trees</td></tr>
+                        <tr><td>Subjects</td><td class="num">24</td></tr>
+                        <tr><td>Windows evaluated (out-of-fold)</td><td class="num">55 982</td></tr>
+                        <tr><td>Features per window</td><td class="num">60</td></tr>
+                        <tr><td>Cross-validation</td><td class="num">5-fold GroupKFold</td></tr>
+                        <tr><td>Group key</td><td class="num">activity_trial</td></tr>
+                        <tr class="highlight"><td>Latency / window</td><td class="num">42.0 ms</td></tr>
+                    </tbody>
+                </table>
+                <div class="card-text" style="margin-top: 8px; font-size: 12.5px;">
+                    <p>Source : <code>reports/metrics.json</code> &middot; generated 2026-05-13.</p>
+                </div>
+            </div>
+            <div class="card accent-purple">
+                <div class="card-title">Confusion matrix &mdash; diagonal-dominant</div>
+                <img src="../reports/confusion_matrix.png" alt="confusion matrix" style="width: 100%; max-height: 280px; object-fit: contain; border-radius: 8px;"/>
+                <div class="card-text" style="margin-top: 4px; font-size: 12px;">
+                    <p>Visual proof : the model sends most of its probability mass to the right subject. Off-diagonal noise is residual confusion between behaviourally close subjects.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="slide-footer">
+        <span class="brand">PrivIMU &middot; SUP'COM 2026</span>
+        <span class="speaker">M5 &mdash; Results</span>
+        <span class="pagenum">13 / 15</span>
+    </div>
+</section>
+
+<!-- ===================== SLIDE 14 — LIMITS & MITIGATIONS ===================== -->
+<section class="slide" id="s14">
+    <div class="slide-header">
+        <span class="section-badge orange">Act V &mdash; Limits</span>
+        <h2 class="slide-title">Limits &amp; <span style="color: var(--accent-orange);">privacy-by-design</span> mitigations</h2>
+    </div>
+    <div class="slide-body">
+        <div class="grid-2">
+            <div class="card accent-red">
+                <div class="card-title">What this study does <em>not</em> claim</div>
+                <div class="card-text">
+                    <ul>
+                        <li><strong>24 subjects</strong> &mdash; not population-scale.</li>
+                        <li><strong>Closed-set</strong> identification &mdash; new subjects not modelled.</li>
+                        <li><strong>Single device class</strong> &mdash; iPhone 6s, phone-in-pocket.</li>
+                        <li><strong>Single dataset</strong> &mdash; MotionSense, controlled lab.</li>
+                        <li><strong>No adversarial robustness</strong> &mdash; attacker uses the same feature space.</li>
+                        <li><strong>Gaussian noise</strong> defence is illustrative, not certified DP.</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="card accent-green">
+                <div class="card-title">Mitigations &mdash; a privacy-by-design checklist</div>
+                <div class="card-text">
+                    <ul>
+                        <li><strong>Data minimisation</strong> &mdash; collect only the channels and rate the use-case requires.</li>
+                        <li><strong>On-device inference</strong> &mdash; never ship raw IMU windows to the cloud.</li>
+                        <li><strong>Federated learning</strong> &mdash; train without centralising raw traces.</li>
+                        <li><strong>Differential privacy</strong> &mdash; calibrated noise on shared aggregates.</li>
+                        <li><strong>Feature-level sharing</strong> &mdash; release coarse features, not raw signals.</li>
+                        <li><strong>Consent &amp; transparency</strong> &mdash; treat IMU as PII in data notices.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="info-box" style="border-left-color: var(--accent-orange);">
+            <div class="ib-title" style="color: var(--accent-orange);">A defensible posture</div>
+            <p>A 39% top-1 on 24 subjects is not a real-world identification system. <strong>It is a proof that the signal carries identity</strong>. Under more subjects, more sessions, deeper models or device-fingerprint cross-correlation, the number can only grow. The right reaction is to <em>treat motion data as personal data</em> &mdash; not to wait for the attack at scale.</p>
+        </div>
+    </div>
+    <div class="slide-footer">
+        <span class="brand">PrivIMU &middot; SUP'COM 2026</span>
+        <span class="speaker">M5 &mdash; Limits</span>
+        <span class="pagenum">14 / 15</span>
+    </div>
+</section>
+
+<!-- ===================== SLIDE 15 — TAKEAWAY + LINKS ===================== -->
+<section class="slide" id="s15">
+    <div class="slide-header">
+        <span class="section-badge">Act V &mdash; Take-away</span>
+        <h2 class="slide-title">Anonymous &ne; non-identifiable. <span class="accent">Treat motion data as PII.</span></h2>
+    </div>
+    <div class="slide-body">
+        <div class="grid-3">
+            <div class="card accent-blue">
+                <div class="card-title">01 &mdash; Signals carry identity</div>
+                <div class="card-text">
+                    <p>1 s windows of accelerometer + gyroscope already lift the random baseline by an order of magnitude on 24 subjects.</p>
+                </div>
+            </div>
+            <div class="card accent-green">
+                <div class="card-title">02 &mdash; Leakage is measurable</div>
+                <div class="card-text">
+                    <p>&Delta;H = log<sub>2</sub>(K) &minus; H(p) gives a single number in bits. PrivIMU computes it, plots it and exports it.</p>
+                </div>
+            </div>
+            <div class="card accent-orange">
+                <div class="card-title">03 &mdash; Defences exist</div>
+                <div class="card-text">
+                    <p>From data minimisation to differential privacy, the shape of the trade-off is observable and tunable, live, in the Streamlit lab.</p>
+                </div>
+            </div>
+        </div>
+        <div class="grid-3" style="gap: 14px;">
+            <div class="qr-card">
+                <img src="assets/qr_github.png" alt="GitHub QR"/>
+                <div class="qr-title">GitHub repo</div>
+                <div class="qr-url">github.com/akiroussama/<br>PrivIMU</div>
+            </div>
+            <div class="qr-card">
+                <img src="assets/qr_colab.png" alt="Colab QR"/>
+                <div class="qr-title">Google Colab notebook</div>
+                <div class="qr-url">colab.research.google.com/github/<br>akiroussama/PrivIMU</div>
+            </div>
+            <div class="qr-card">
+                <img src="assets/qr_streamlit.png" alt="Streamlit QR"/>
+                <div class="qr-title">Streamlit demo</div>
+                <div class="qr-url">streamlit run streamlit_app.py<br>(see README for hosted URL)</div>
+            </div>
+        </div>
+        <div class="info-box">
+            <div class="ib-title">Reproduce in 4 lines</div>
+            <p style="font-family: 'JetBrains Mono', monospace; font-size: 13px;">
+                pip install -e ".[dev,app]" &middot;
+                python data/download.py --dest data/raw/motionsense &middot;
+                python -m privimu.train --data-root data/raw/motionsense --model rf &middot;
+                streamlit run streamlit_app.py
+            </p>
+        </div>
+    </div>
+    <div class="slide-footer">
+        <span class="brand">PrivIMU &middot; SUP'COM 2026</span>
+        <span class="speaker">M5 &mdash; Conclusion &amp; Q&amp;A</span>
+        <span class="pagenum">15 / 15</span>
+    </div>
+</section>
+
+</body>
+</html>

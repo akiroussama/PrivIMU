@@ -23,16 +23,14 @@ from privimu.model_rf import load_model
 st.set_page_config(page_title="PrivIMU", page_icon="🛡️", layout="wide")
 
 MODEL_PATH = Path("models/rf.joblib")
-SAMPLE_CSV_PATHS = [
+WLK7_EXAMPLES_DIR = Path("examples/wlk_7")
+RAW_WLK7_BASE_URL = "https://raw.githubusercontent.com/akiroussama/PrivIMU/main/examples/wlk_7"
+GITHUB_WLK7_DIR_URL = "https://github.com/akiroussama/PrivIMU/tree/main/examples/wlk_7"
+OFFICIAL_MOTIONSENSE_ZIP_URL = "https://github.com/mmalekzadeh/motion-sense/raw/master/data/A_DeviceMotion_data.zip"
+SAMPLE_CSV_FALLBACK_PATHS = [
+    Path("examples/demo_motionsense_like.csv"),
     Path("demo/sample_motionsense_like.csv"),
     Path("demo/motionsense_like_sample.csv"),
-    Path("examples/demo_motionsense_like.csv"),
-]
-OFFICIAL_MOTIONSENSE_ZIP_URL = "https://github.com/mmalekzadeh/motion-sense/raw/master/data/A_DeviceMotion_data.zip"
-RAW_DEMO_CSV_URLS = [
-    "https://raw.githubusercontent.com/akiroussama/PrivIMU/main/demo/sample_motionsense_like.csv",
-    "https://raw.githubusercontent.com/akiroussama/PrivIMU/main/demo/motionsense_like_sample.csv",
-    "https://raw.githubusercontent.com/akiroussama/PrivIMU/main/examples/demo_motionsense_like.csv",
 ]
 WINDOW_CONFIG = WindowConfig(window_size=50, step_size=25)
 EPS = 1e-12
@@ -84,10 +82,36 @@ def inject_css() -> None:
     )
 
 
-def load_uploaded_signal(uploaded_file) -> tuple[np.ndarray, str]:
+def subject_id_from_sample_name(name: str, default: int = 7) -> int:
+    """Extract MotionSense subject id from names such as sub_7.csv."""
+
+    stem = Path(name).stem
+    if stem.startswith("sub_"):
+        try:
+            return int(stem.split("_", maxsplit=1)[1])
+        except ValueError:
+            return default
+    return default
+
+
+def sample_sort_key(path: Path) -> tuple[int, str]:
+    """Sort sub_1.csv, sub_2.csv, ... numerically for the sidebar."""
+
+    return (subject_id_from_sample_name(path.name, default=999), path.name)
+
+
+def bundled_wlk7_paths() -> list[Path]:
+    """Return the MotionSense walking CSVs committed under examples/wlk_7."""
+
+    if not WLK7_EXAMPLES_DIR.exists():
+        return []
+    return sorted(WLK7_EXAMPLES_DIR.glob("sub_*.csv"), key=sample_sort_key)
+
+
+def load_csv_signal(csv_source, label: str) -> tuple[np.ndarray, str]:
     """Load a MotionSense-like CSV and return the six IMU channels."""
 
-    df = pd.read_csv(uploaded_file)
+    df = pd.read_csv(csv_source)
     unnamed_cols = [col for col in df.columns if str(col).startswith("Unnamed")]
     if unnamed_cols:
         df = df.drop(columns=unnamed_cols)
@@ -96,16 +120,39 @@ def load_uploaded_signal(uploaded_file) -> tuple[np.ndarray, str]:
         st.error(f"Missing columns: {missing}")
         st.info("Expected columns: " + ", ".join(DEFAULT_CHANNELS))
         st.stop()
-    label = getattr(uploaded_file, "name", "uploaded_csv")
     return df[DEFAULT_CHANNELS].to_numpy(dtype=float), label
 
 
-def sample_csv_bytes() -> tuple[bytes, str]:
-    """Return a bundled demo CSV when available, otherwise generate one on the fly."""
+def load_uploaded_signal(uploaded_file) -> tuple[np.ndarray, str]:
+    """Load an uploaded MotionSense-like CSV."""
 
-    for path in SAMPLE_CSV_PATHS:
+    label = getattr(uploaded_file, "name", "uploaded_csv")
+    return load_csv_signal(uploaded_file, label)
+
+
+def load_bundled_signal(path: Path) -> tuple[np.ndarray, str]:
+    """Load a committed example CSV from examples/wlk_7."""
+
+    return load_csv_signal(path, f"bundled example: examples/wlk_7/{path.name}")
+
+
+def sample_csv_bytes(selected_path: Path | None = None) -> tuple[bytes, str]:
+    """Return a committed demo CSV when available, otherwise generate one on the fly."""
+
+    candidate_paths = []
+    if selected_path is not None:
+        candidate_paths.append(selected_path)
+    candidate_paths.extend(bundled_wlk7_paths())
+    candidate_paths.extend(SAMPLE_CSV_FALLBACK_PATHS)
+
+    seen: set[Path] = set()
+    for path in candidate_paths:
+        if path in seen:
+            continue
+        seen.add(path)
         if path.exists():
             return path.read_bytes(), path.name
+
     df = pd.DataFrame(synthetic_imu_signal(subject_id=7), columns=DEFAULT_CHANNELS)
     df.insert(0, "time_s", np.arange(len(df)) / 50.0)
     return df.to_csv(index=False).encode("utf-8"), "sample_motionsense_like.csv"
@@ -582,11 +629,33 @@ if model is None:
 else:
     st.success("Current mode: trained Random Forest model loaded from models/rf.joblib.")
 
+uploaded = None
+selected_sample_path: Path | None = None
+input_mode = "Synthetic fallback"
+fallback_subject = 7
+
 with st.sidebar:
     st.header("Input")
-    fallback_subject = st.slider("Demo subject ID", 1, 24, 7)
+    bundled_samples = bundled_wlk7_paths()
+    input_options = []
+    if bundled_samples:
+        input_options.append("Bundled MotionSense wlk_7 CSV")
+    input_options.extend(["Upload MotionSense-like CSV", "Synthetic fallback"])
+
+    input_mode = st.radio("Signal source", input_options, index=0)
+
+    subject_hint = 7
+    if input_mode == "Bundled MotionSense wlk_7 CSV" and bundled_samples:
+        sample_labels = [f"wlk_7/{path.name}" for path in bundled_samples]
+        selected_label = st.selectbox("Bundled test CSV", sample_labels, index=0)
+        selected_sample_path = bundled_samples[sample_labels.index(selected_label)]
+        subject_hint = subject_id_from_sample_name(selected_sample_path.name, default=7)
+        st.caption("Using a real MotionSense CSV committed in this repository, no external download required.")
+    elif input_mode == "Upload MotionSense-like CSV":
+        uploaded = st.file_uploader("Upload MotionSense-like CSV", type=["csv"])
+
+    fallback_subject = st.slider("Demo / fallback subject ID", 1, 24, subject_hint)
     sigma = st.slider("Gaussian noise defense σ", 0.0, 1.0, 0.0, 0.05)
-    uploaded = st.file_uploader("Upload MotionSense-like CSV", type=["csv"])
 
     st.divider()
     st.header("WOW controls")
@@ -596,22 +665,27 @@ with st.sidebar:
 
     st.divider()
     st.caption("Need a CSV for the upload box?")
-    sample_bytes, sample_name = sample_csv_bytes()
+    sample_bytes, sample_name = sample_csv_bytes(selected_sample_path)
     st.download_button(
-        label="Download demo CSV",
+        label="Download selected demo CSV",
         data=sample_bytes,
         file_name=sample_name,
         mime="text/csv",
-        help="Synthetic MotionSense-like file with the six IMU columns used by PrivIMU.",
+        help="Real MotionSense-style CSV from examples/wlk_7 when available; synthetic fallback otherwise.",
         use_container_width=True,
     )
-    st.markdown("Raw demo CSV on GitHub:")
-    for idx, url in enumerate(RAW_DEMO_CSV_URLS, start=1):
-        st.markdown(f"- [mirror {idx}]({url})")
+    st.markdown("Repository test CSVs:")
+    st.markdown(f"- [Open examples/wlk_7 folder]({GITHUB_WLK7_DIR_URL})")
+    raw_link_names = [path.name for path in bundled_samples] or ["sub_1.csv"]
+    with st.expander("Raw GitHub CSV links"):
+        for name in raw_link_names:
+            st.markdown(f"- [{name}]({RAW_WLK7_BASE_URL}/{name})")
     st.markdown(f"[Official MotionSense DeviceMotion ZIP]({OFFICIAL_MOTIONSENSE_ZIP_URL})")
-    st.caption("Extract the ZIP, then upload a file like A_DeviceMotion_data/wlk_7/sub_1.csv.")
+    st.caption("The app expects rotationRate.* and userAcceleration.* columns, as in examples/wlk_7/sub_1.csv.")
 
-if uploaded is not None:
+if selected_sample_path is not None:
+    signal, source_label = load_bundled_signal(selected_sample_path)
+elif uploaded is not None:
     signal, source_label = load_uploaded_signal(uploaded)
 else:
     signal = synthetic_imu_signal(subject_id=fallback_subject)

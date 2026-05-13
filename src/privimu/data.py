@@ -55,8 +55,21 @@ def parse_motion_file(path: Path) -> MotionFile:
     )
 
 
+def _has_subject_csv_files(path: Path) -> bool:
+    """Return True when a directory contains MotionSense subject CSV files."""
+
+    return any(path.rglob("sub_*.csv"))
+
+
 def resolve_device_motion_root(data_root: Path) -> Path:
-    """Find the `A_DeviceMotion_data` directory from common extraction layouts."""
+    """Find MotionSense DeviceMotion CSVs from common extraction layouts.
+
+    The official ``A_DeviceMotion_data.zip`` may extract either as an
+    ``A_DeviceMotion_data`` folder or directly as activity folders. The older
+    downloader also extracted the whole GitHub repo, where the dataset archive
+    is nested under ``motion-sense-master/data``. This resolver accepts all
+    layouts that contain ``sub_*.csv`` files.
+    """
 
     root = Path(data_root)
     candidates = [
@@ -66,15 +79,20 @@ def resolve_device_motion_root(data_root: Path) -> Path:
         root / "motion-sense-main" / "data" / "A_DeviceMotion_data",
     ]
     for candidate in candidates:
-        if candidate.exists():
+        if candidate.is_dir() and _has_subject_csv_files(candidate):
             return candidate
 
     for candidate in root.rglob("A_DeviceMotion_data"):
-        if candidate.is_dir():
+        if candidate.is_dir() and _has_subject_csv_files(candidate):
             return candidate
 
+    if root.is_dir() and _has_subject_csv_files(root):
+        return root
+
+    nested_zip = next(root.rglob("A_DeviceMotion_data.zip"), None) if root.exists() else None
+    hint = f" Found nested archive {nested_zip}; extract it first." if nested_zip else ""
     raise FileNotFoundError(
-        f"Could not find A_DeviceMotion_data under {root}. Run data/download.py first."
+        f"Could not find MotionSense CSV files under {root}.{hint} Run data/download.py --force first."
     )
 
 

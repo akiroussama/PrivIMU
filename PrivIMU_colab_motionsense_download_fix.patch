@@ -1,0 +1,241 @@
+diff -ruN orig/data/download.py new/data/download.py
+--- orig/data/download.py	2026-05-12 21:42:08.479741252 +0000
++++ new/data/download.py	2026-05-12 21:42:08.561063334 +0000
+@@ -1,8 +1,13 @@
+ #!/usr/bin/env python3
+-"""Download MotionSense from the official GitHub repository.
++"""Download and extract MotionSense DeviceMotion CSV files.
+ 
+-The script avoids storing raw data in git. It downloads a ZIP archive and extracts
+-it under data/raw/motionsense by default.
++This script intentionally downloads the official DeviceMotion archive, not the
++whole GitHub repository. The training pipeline expects MotionSense CSV files such
++as ``wlk_7/sub_1.csv`` under ``data/raw/motionsense``.
++
++It also handles the common mistake where the repository ZIP was downloaded
++instead: if a nested ``A_DeviceMotion_data.zip`` is found after extraction, the
++script extracts it automatically.
+ """
+ 
+ from __future__ import annotations
+@@ -14,7 +19,9 @@
+ import zipfile
+ from pathlib import Path
+ 
+-DEFAULT_URL = "https://github.com/mmalekzadeh/motion-sense/archive/refs/heads/master.zip"
++DEFAULT_URL = "https://github.com/mmalekzadeh/motion-sense/raw/master/data/A_DeviceMotion_data.zip"
++REPO_ZIP_URL = "https://github.com/mmalekzadeh/motion-sense/archive/refs/heads/master.zip"
++EXPECTED_DIR = "A_DeviceMotion_data"
+ 
+ 
+ def download_file(url: str, target: Path) -> None:
+@@ -25,30 +32,106 @@
+     print(f"[PrivIMU] Saved archive to {target}")
+ 
+ 
+-def extract_zip(archive: Path, dest: Path, force: bool = False) -> None:
++def _safe_extract_zip(archive: Path, dest: Path) -> None:
++    """Extract a ZIP file while protecting against path traversal."""
++
++    dest_resolved = dest.resolve()
++    with zipfile.ZipFile(archive) as zf:
++        for member in zf.infolist():
++            target = (dest / member.filename).resolve()
++            if not str(target).startswith(str(dest_resolved)):
++                raise RuntimeError(f"Unsafe path in zip archive: {member.filename}")
++        zf.extractall(dest)
++
++
++def _has_subject_csv_files(path: Path) -> bool:
++    return any(path.rglob("sub_*.csv"))
++
++
++def _find_device_motion_dir(dest: Path) -> Path | None:
++    candidates = [
++        dest / EXPECTED_DIR,
++        dest / "data" / EXPECTED_DIR,
++        dest / "motion-sense-master" / "data" / EXPECTED_DIR,
++        dest / "motion-sense-main" / "data" / EXPECTED_DIR,
++    ]
++    for candidate in candidates:
++        if candidate.is_dir() and _has_subject_csv_files(candidate):
++            return candidate
++    for candidate in dest.rglob(EXPECTED_DIR):
++        if candidate.is_dir() and _has_subject_csv_files(candidate):
++            return candidate
++    if _has_subject_csv_files(dest):
++        return dest
++    return None
++
++
++def _extract_nested_device_motion_zip(dest: Path) -> bool:
++    """Extract a nested A_DeviceMotion_data.zip if the repo ZIP was downloaded."""
++
++    nested_zips = sorted(dest.rglob(f"{EXPECTED_DIR}.zip"))
++    if not nested_zips:
++        return False
++
++    nested = nested_zips[0]
++    print(f"[PrivIMU] Found nested dataset archive: {nested}")
++    print(f"[PrivIMU] Extracting nested MotionSense archive to {dest}")
++    _safe_extract_zip(nested, dest)
++    return True
++
++
++def extract_zip(archive: Path, dest: Path, force: bool = False) -> Path:
+     if dest.exists() and any(dest.iterdir()) and not force:
++        existing = _find_device_motion_dir(dest)
++        if existing is not None:
++            print(f"[PrivIMU] Dataset already available at {existing}")
++            return existing
+         raise FileExistsError(
+-            f"Destination {dest} is not empty. Use --force to overwrite or choose another path."
++            f"Destination {dest} is not empty but MotionSense CSV files were not found. "
++            "Use --force to overwrite or run the one-cell Colab repair snippet."
+         )
++
+     if force and dest.exists():
+         shutil.rmtree(dest)
+     dest.mkdir(parents=True, exist_ok=True)
++
+     print(f"[PrivIMU] Extracting to {dest}")
+-    with zipfile.ZipFile(archive) as zf:
+-        zf.extractall(dest)
++    _safe_extract_zip(archive, dest)
++
++    device_root = _find_device_motion_dir(dest)
++    if device_root is None:
++        _extract_nested_device_motion_zip(dest)
++        device_root = _find_device_motion_dir(dest)
++
++    if device_root is None:
++        raise FileNotFoundError(
++            f"Could not find MotionSense subject CSV files after extracting {archive}. "
++            f"Tip: use the official dataset URL: {DEFAULT_URL}"
++        )
++
++    csv_count = len(list(device_root.rglob("sub_*.csv")))
++    print(f"[PrivIMU] Verified dataset root: {device_root}")
++    print(f"[PrivIMU] Found {csv_count} MotionSense subject CSV files")
++    return device_root
+ 
+ 
+ def main(argv: list[str] | None = None) -> int:
+-    parser = argparse.ArgumentParser(description="Download the MotionSense dataset archive.")
++    parser = argparse.ArgumentParser(description="Download the MotionSense DeviceMotion dataset archive.")
+     parser.add_argument("--url", default=DEFAULT_URL, help="MotionSense ZIP archive URL")
+     parser.add_argument("--dest", type=Path, default=Path("data/raw/motionsense"))
+-    parser.add_argument("--archive", type=Path, default=Path("data/raw/motionsense.zip"))
++    parser.add_argument("--archive", type=Path, default=Path("data/raw/A_DeviceMotion_data.zip"))
+     parser.add_argument("--force", action="store_true", help="Overwrite destination if it exists")
++    parser.add_argument(
++        "--repo-zip",
++        action="store_true",
++        help="Download the whole MotionSense repository ZIP, then auto-extract the nested dataset ZIP.",
++    )
+     args = parser.parse_args(argv)
+ 
+-    download_file(args.url, args.archive)
++    url = REPO_ZIP_URL if args.repo_zip else args.url
++    download_file(url, args.archive)
+     extract_zip(args.archive, args.dest, force=args.force)
+-    print("[PrivIMU] Done. You can now run: make train-rf")
++    print("[PrivIMU] Done. Next: python -m privimu.train --data-root data/raw/motionsense --model rf --output-dir .")
+     return 0
+ 
+ 
+diff -ruN orig/docs/COLAB_TROUBLESHOOTING.md new/docs/COLAB_TROUBLESHOOTING.md
+--- orig/docs/COLAB_TROUBLESHOOTING.md	1970-01-01 00:00:00.000000000 +0000
++++ new/docs/COLAB_TROUBLESHOOTING.md	2026-05-12 21:42:11.142476049 +0000
+@@ -0,0 +1,41 @@
++# Colab troubleshooting
++
++## `Could not find A_DeviceMotion_data under data/raw/motionsense`
++
++This happens when the full MotionSense repository ZIP was extracted instead of the
++nested DeviceMotion dataset ZIP.
++
++Quick repair inside Colab:
++
++```python
++from pathlib import Path
++from zipfile import ZipFile
++
++root = Path("data/raw/motionsense")
++nested = list(root.rglob("A_DeviceMotion_data.zip"))
++print("nested archives:", nested)
++assert nested, "No nested A_DeviceMotion_data.zip found. Rerun data/download.py --force."
++
++with ZipFile(nested[0]) as zf:
++    zf.extractall(root)
++
++print("csv files:", len(list(root.rglob("sub_*.csv"))))
++```
++
++Then rerun:
++
++```bash
++python -m privimu.train --data-root data/raw/motionsense --model rf --output-dir . --window-size 50 --step-size 25 --n-splits 5
++```
++
++Permanent fix:
++
++```bash
++python data/download.py --dest data/raw/motionsense --force
++```
++
++The fixed downloader now uses the official MotionSense DeviceMotion ZIP directly:
++
++```text
++https://github.com/mmalekzadeh/motion-sense/raw/master/data/A_DeviceMotion_data.zip
++```
+diff -ruN orig/src/privimu/data.py new/src/privimu/data.py
+--- orig/src/privimu/data.py	2026-05-12 21:42:08.491378412 +0000
++++ new/src/privimu/data.py	2026-05-12 21:42:10.711203329 +0000
+@@ -55,8 +55,21 @@
+     )
+ 
+ 
++def _has_subject_csv_files(path: Path) -> bool:
++    """Return True when a directory contains MotionSense subject CSV files."""
++
++    return any(path.rglob("sub_*.csv"))
++
++
+ def resolve_device_motion_root(data_root: Path) -> Path:
+-    """Find the `A_DeviceMotion_data` directory from common extraction layouts."""
++    """Find MotionSense DeviceMotion CSVs from common extraction layouts.
++
++    The official ``A_DeviceMotion_data.zip`` may extract either as an
++    ``A_DeviceMotion_data`` folder or directly as activity folders. The older
++    downloader also extracted the whole GitHub repo, where the dataset archive
++    is nested under ``motion-sense-master/data``. This resolver accepts all
++    layouts that contain ``sub_*.csv`` files.
++    """
+ 
+     root = Path(data_root)
+     candidates = [
+@@ -66,15 +79,20 @@
+         root / "motion-sense-main" / "data" / "A_DeviceMotion_data",
+     ]
+     for candidate in candidates:
+-        if candidate.exists():
++        if candidate.is_dir() and _has_subject_csv_files(candidate):
+             return candidate
+ 
+     for candidate in root.rglob("A_DeviceMotion_data"):
+-        if candidate.is_dir():
++        if candidate.is_dir() and _has_subject_csv_files(candidate):
+             return candidate
+ 
++    if root.is_dir() and _has_subject_csv_files(root):
++        return root
++
++    nested_zip = next(root.rglob("A_DeviceMotion_data.zip"), None) if root.exists() else None
++    hint = f" Found nested archive {nested_zip}; extract it first." if nested_zip else ""
+     raise FileNotFoundError(
+-        f"Could not find A_DeviceMotion_data under {root}. Run data/download.py first."
++        f"Could not find MotionSense CSV files under {root}.{hint} Run data/download.py --force first."
+     )
+ 
+ 
